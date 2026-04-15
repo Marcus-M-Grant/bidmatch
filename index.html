@@ -1,0 +1,1396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BidMatch</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #F5F6F8;
+      color: #1A1A2E;
+      min-height: 100vh;
+    }
+
+    .brand {
+      font-family: 'DM Serif Display', serif;
+      color: #0F2B5B;
+    }
+
+    /* ── Views ────────────────────────────────── */
+    #view1, #view2, #view4 { display: none; }
+
+    #view1.active {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    #view2.active {
+      display: block;
+      min-height: 100vh;
+    }
+
+    #view4.active { display: block; }
+
+    /* ── Password Gate ─────────────────────────── */
+    #gate {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #F5F6F8;
+      z-index: 1000;
+    }
+
+    #gate.hidden { display: none; }
+
+    .gate-card {
+      background: white;
+      border-radius: 16px;
+      padding: 48px 40px;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      border: 1px solid #E2E5EA;
+    }
+
+    .gate-logo { font-size: 2.2rem; display: block; margin-bottom: 6px; }
+    .gate-subtitle { color: #6B7280; font-size: 0.9rem; margin-bottom: 32px; }
+
+    .gate-input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #E2E5EA;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+      margin-bottom: 10px;
+    }
+
+    .gate-input:focus { border-color: #0F2B5B; }
+
+    .gate-input.shake {
+      animation: shake 0.4s ease;
+      border-color: #C0392B;
+    }
+
+    .gate-error {
+      color: #C0392B;
+      font-size: 0.85rem;
+      margin-bottom: 10px;
+      min-height: 20px;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%       { transform: translateX(-8px); }
+      40%       { transform: translateX(8px); }
+      60%       { transform: translateX(-6px); }
+      80%       { transform: translateX(6px); }
+    }
+
+    /* ── Buttons ──────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: #0F2B5B;
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) { background: #0a1f44; }
+
+    .btn-primary:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: white;
+      color: #0F2B5B;
+      border: 1px solid #E2E5EA;
+    }
+
+    .btn-secondary:hover { border-color: #B0B8C4; }
+
+    .btn-full { width: 100%; }
+
+    /* ── Forms ────────────────────────────────── */
+    .form-group { margin-bottom: 18px; }
+
+    label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #374151;
+      margin-bottom: 6px;
+    }
+
+    input[type="text"],
+    input[type="date"],
+    textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #E2E5EA;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+      color: #1A1A2E;
+      background: white;
+    }
+
+    input[type="text"]:focus,
+    input[type="date"]:focus,
+    textarea:focus { border-color: #0F2B5B; }
+
+    textarea { resize: vertical; }
+
+    .error-msg {
+      color: #C0392B;
+      font-size: 0.84rem;
+      margin-top: 6px;
+      min-height: 18px;
+    }
+
+    /* ── Cards ────────────────────────────────── */
+    .card {
+      background: white;
+      border-radius: 12px;
+      border: 1px solid #E2E5EA;
+      padding: 32px;
+      transition: border-color 0.2s;
+    }
+
+    .card:hover { border-color: #B0B8C4; }
+
+    /* ── View 1 ───────────────────────────────── */
+    #view1 .card { width: 100%; max-width: 640px; }
+
+    .add-doc-link {
+      color: #0F2B5B;
+      font-size: 0.875rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 18px;
+      font-weight: 500;
+      background: none;
+      border: none;
+      font-family: inherit;
+      padding: 0;
+    }
+
+    .add-doc-link:hover { text-decoration: underline; }
+
+    /* ── Loading Overlay ──────────────────────── */
+    #loading {
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,0.92);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    #loading.active { display: flex; }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #E2E5EA;
+      border-top-color: #0F2B5B;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #loading-text {
+      color: #374151;
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    /* ── Profile Modal ────────────────────────── */
+    #profileModal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.48);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1500;
+      padding: 20px;
+    }
+
+    #profileModal.active { display: flex; }
+
+    .modal-card {
+      background: white;
+      border-radius: 16px;
+      padding: 36px;
+      width: 100%;
+      max-width: 560px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-card h2 {
+      font-size: 1.4rem;
+      color: #0F2B5B;
+      margin-bottom: 8px;
+    }
+
+    .modal-summary {
+      color: #6B7280;
+      font-size: 0.9rem;
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    .tag-group { margin-bottom: 20px; }
+
+    .tag-group > label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #9CA3AF;
+      margin-bottom: 8px;
+    }
+
+    .tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 100px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      user-select: none;
+      transition: opacity 0.15s;
+    }
+
+    .tag:hover { opacity: 0.75; }
+    .tag-blue  { background: #EFF6FF; color: #1D4ED8; }
+    .tag-gray  { background: #F3F4F6; color: #374151; }
+    .tag-green { background: #ECFDF5; color: #065F46; }
+    .tag-navy  { background: #EEF2FF; color: #0F2B5B; }
+    .tag-amber { background: #FFFBEB; color: #92400E; }
+
+    .tag-remove { font-size: 0.7rem; opacity: 0.55; }
+
+    .tag-add-input {
+      padding: 3px 10px;
+      border: 1px dashed #D1D5DB;
+      border-radius: 100px;
+      font-family: inherit;
+      font-size: 0.8rem;
+      outline: none;
+      width: 110px;
+      background: transparent;
+      color: #374151;
+    }
+
+    .tag-add-input:focus { border-color: #0F2B5B; }
+
+    /* ── View 2 ───────────────────────────────── */
+    #view2 .inner {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    .view2-header { margin-bottom: 28px; }
+
+    .view2-header h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #0F2B5B;
+      margin-bottom: 6px;
+    }
+
+    .view2-header p { color: #6B7280; font-size: 0.9rem; }
+
+    .url-row { display: flex; gap: 10px; margin-bottom: 4px; }
+    .url-row input { flex: 1; }
+    .url-row .btn { white-space: nowrap; padding: 10px 20px; }
+
+    .rfp-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+
+    .rfp-list-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: white;
+      border: 1px solid #E2E5EA;
+      border-radius: 8px;
+      font-size: 0.875rem;
+    }
+
+    .rfp-list-item .item-label {
+      flex: 1;
+      color: #374151;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+    }
+
+    .item-tag {
+      padding: 2px 9px;
+      border-radius: 100px;
+      font-size: 0.72rem;
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+
+    .trash-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #9CA3AF;
+      padding: 2px;
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+      transition: color 0.2s;
+    }
+
+    .trash-btn:hover { color: #C0392B; }
+
+    .manual-toggle {
+      color: #0F2B5B;
+      font-size: 0.875rem;
+      cursor: pointer;
+      font-weight: 500;
+      background: none;
+      border: none;
+      padding: 0;
+      font-family: inherit;
+      margin-bottom: 16px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .manual-toggle:hover { text-decoration: underline; }
+
+    .manual-form {
+      display: none;
+      background: white;
+      border: 1px solid #E2E5EA;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+
+    .manual-form.open { display: block; }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .form-row .form-group { margin-bottom: 0; }
+
+    .view2-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 16px;
+      border-top: 1px solid #E2E5EA;
+      margin-top: 8px;
+    }
+
+    .reset-link {
+      color: #6B7280;
+      font-size: 0.85rem;
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-family: inherit;
+      padding: 0;
+    }
+
+    .reset-link:hover { color: #0F2B5B; text-decoration: underline; }
+
+    /* ── View 4 Dashboard ─────────────────────── */
+    .topbar {
+      background: white;
+      border-bottom: 1px solid #E2E5EA;
+      padding: 14px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .topbar .brand { font-size: 1.4rem; }
+
+    .user-info { display: flex; align-items: center; gap: 12px; }
+
+    .company-label { font-size: 0.875rem; color: #374151; }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      background: #0F2B5B;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      flex-shrink: 0;
+    }
+
+    .dash-content {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 32px 20px;
+    }
+
+    .stat-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: #EEF0F4;
+      border-radius: 12px;
+      padding: 20px 22px;
+    }
+
+    .stat-val {
+      font-size: 2rem;
+      font-weight: 600;
+      color: #0F2B5B;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .stat-lbl { font-size: 0.8rem; color: #6B7280; }
+
+    .cap-strip {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 6px;
+      padding: 12px 16px;
+      background: white;
+      border: 1px solid #E2E5EA;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    .cap-strip:hover { border-color: #B0B8C4; }
+
+    .cap-label { font-size: 0.75rem; color: #9CA3AF; margin-right: 2px; }
+
+    .cap-more { font-size: 0.8rem; color: #9CA3AF; }
+
+    .profile-expanded {
+      display: none;
+      margin-bottom: 20px;
+      padding: 16px 20px;
+      background: white;
+      border: 1px solid #E2E5EA;
+      border-top: none;
+      border-radius: 0 0 10px 10px;
+      font-size: 0.85rem;
+      line-height: 1.8;
+    }
+
+    .profile-expanded.open { display: block; }
+
+    .rfp-cards { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+
+    .rfp-card {
+      background: white;
+      border: 1px solid #E2E5EA;
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      gap: 16px;
+      transition: border-color 0.2s;
+    }
+
+    .rfp-card:hover { border-color: #B0B8C4; }
+
+    .rfp-card.best-match { border-left: 3px solid #0F2B5B; }
+
+    .rfp-body { flex: 1; min-width: 0; }
+
+    .rfp-title-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 3px;
+    }
+
+    .rfp-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: #111827;
+      line-height: 1.4;
+    }
+
+    .best-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 9px;
+      background: #EEF2FF;
+      color: #0F2B5B;
+      border-radius: 100px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .rfp-meta { font-size: 0.8rem; color: #9CA3AF; margin-bottom: 10px; }
+
+    .rfp-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      margin-bottom: 9px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 9px;
+      border-radius: 100px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .pill-class       { background: #F3F4F6; color: #374151; }
+    .pill-date        { background: transparent; color: #6B7280; font-weight: 400; }
+    .pill-date.urgent { color: #C0392B; font-weight: 500; }
+    .pill-easy        { background: #ECFDF5; color: #065F46; }
+    .pill-medium      { background: #FFFBEB; color: #92400E; }
+    .pill-hard        { background: #FEF2F2; color: #991B1B; }
+    .pill-gap         { background: #FFFBEB; color: #92400E; }
+
+    .rfp-fit {
+      font-size: 0.8125rem;
+      color: #6B7280;
+      margin-bottom: 9px;
+      line-height: 1.55;
+    }
+
+    .rfp-low-conf {
+      font-size: 0.775rem;
+      color: #9CA3AF;
+      font-style: italic;
+      margin-bottom: 8px;
+    }
+
+    .rfp-link {
+      font-size: 0.8rem;
+      color: #0F2B5B;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .rfp-link:hover { text-decoration: underline; }
+
+    .score-badge {
+      width: 66px;
+      height: 66px;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      align-self: flex-start;
+    }
+
+    .score-num  { font-size: 1.5rem; font-weight: 700; line-height: 1; }
+    .score-lbl  { font-size: 0.58rem; font-weight: 600; opacity: 0.75; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    .score-green  { background: #ECFDF5; color: #1D9E75; }
+    .score-amber  { background: #FFFBEB; color: #D4860A; }
+    .score-orange { background: #FFF4ED; color: #C2540A; }
+    .score-red    { background: #FEF2F2; color: #C0392B; }
+
+    .dash-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid #E2E5EA;
+    }
+
+    /* ── Mobile ───────────────────────────────── */
+    @media (max-width: 600px) {
+      .stat-cards { grid-template-columns: 1fr; }
+
+      .form-row { grid-template-columns: 1fr; }
+
+      .topbar { padding: 12px 16px; }
+
+      .rfp-card { flex-direction: column-reverse; }
+
+      .score-badge {
+        width: 100%;
+        flex-direction: row;
+        gap: 8px;
+        height: auto;
+        padding: 10px 14px;
+        justify-content: flex-start;
+        border-radius: 8px;
+      }
+
+      .dash-actions { flex-direction: column; }
+
+      .gate-card { padding: 36px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Password Gate ──────────────────────────────────── -->
+<div id="gate">
+  <div class="gate-card">
+    <span class="brand gate-logo">BidMatch</span>
+    <p class="gate-subtitle">Vendor Intelligence for Bids &amp; Tenders</p>
+    <div class="gate-error" id="gate-error"></div>
+    <input type="password" id="gate-input" class="gate-input" placeholder="Enter password" autocomplete="current-password">
+    <button class="btn btn-primary btn-full" id="gate-btn">Enter</button>
+  </div>
+</div>
+
+<!-- ── Loading Overlay ────────────────────────────────── -->
+<div id="loading">
+  <div class="spinner"></div>
+  <span id="loading-text">Loading…</span>
+</div>
+
+<!-- ── Profile Review Modal ───────────────────────────── -->
+<div id="profileModal">
+  <div class="modal-card">
+    <h2 id="modal-company"></h2>
+    <p class="modal-summary" id="modal-summary"></p>
+    <div class="tag-group">
+      <label>Capabilities</label>
+      <div class="tag-list" id="modal-capabilities"></div>
+    </div>
+    <div class="tag-group">
+      <label>Geography</label>
+      <div class="tag-list" id="modal-geography"></div>
+    </div>
+    <div class="tag-group">
+      <label>Certifications</label>
+      <div class="tag-list" id="modal-certs"></div>
+    </div>
+    <button class="btn btn-primary btn-full" id="modal-confirm" style="margin-top:8px;">
+      Looks good — Add RFPs →
+    </button>
+  </div>
+</div>
+
+<!-- ── View 1: Upload Vendor Bids ─────────────────────── -->
+<div id="view1">
+  <div class="card" style="width:100%;max-width:640px;">
+    <div style="margin-bottom:28px;">
+      <span class="brand" style="font-size:1.9rem; display:block; margin-bottom:4px;">BidMatch</span>
+      <h1 style="font-size:1.25rem; font-weight:600; color:#0F2B5B; margin-bottom:5px;">Upload Your Bid History</h1>
+      <p style="color:#6B7280; font-size:0.9rem;">Paste past bid submissions so BidMatch can learn your company&rsquo;s capabilities.</p>
+    </div>
+    <div class="form-group">
+      <label for="company-name">Your Company</label>
+      <input type="text" id="company-name" placeholder="e.g. Acme Consulting Inc.">
+    </div>
+    <div id="bid-docs">
+      <div class="form-group">
+        <label>Bid Document 1</label>
+        <textarea rows="8" placeholder="Paste the full text of a past bid submission here…"></textarea>
+      </div>
+    </div>
+    <button class="add-doc-link" id="add-doc-btn">＋ Add another document</button>
+    <div class="error-msg" id="v1-error"></div>
+    <button class="btn btn-primary btn-full" id="v1-next" style="margin-top:6px;">
+      Next: Analyze my bid history →
+    </button>
+  </div>
+</div>
+
+<!-- ── View 2: Manage RFP List ────────────────────────── -->
+<div id="view2">
+  <div class="inner">
+    <div class="view2-header">
+      <h1>Add RFP Opportunities</h1>
+      <p>Add Bids &amp; Tenders URLs or enter RFP details manually. You can mix both.</p>
+    </div>
+
+    <div class="url-row">
+      <input type="text" id="url-input"
+        placeholder="https://bids.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/…">
+      <button class="btn btn-primary" id="url-add-btn">Add</button>
+    </div>
+    <div class="error-msg" id="url-error"></div>
+
+    <div class="rfp-list" id="rfp-list"></div>
+
+    <button class="manual-toggle" id="manual-toggle">＋ Add RFP manually ▾</button>
+
+    <div class="manual-form" id="manual-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label>RFP Title</label>
+          <input type="text" id="m-title" placeholder="e.g. IT Support Services">
+        </div>
+        <div class="form-group">
+          <label>Agency Name</label>
+          <input type="text" id="m-agency" placeholder="e.g. City of Ottawa">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Closing Date</label>
+        <input type="date" id="m-date">
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea rows="5" id="m-desc" placeholder="Paste or type the RFP description…"></textarea>
+      </div>
+      <button class="btn btn-secondary" id="m-add-btn" style="width:auto;">+ Add this RFP</button>
+    </div>
+
+    <div class="view2-bottom">
+      <button class="reset-link" id="reset-rfps">Reset to sample RFPs</button>
+      <button class="btn btn-primary" id="score-btn" style="width:auto;" disabled>
+        Score these opportunities →
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── View 4: Recommendation Dashboard ──────────────── -->
+<div id="view4">
+  <div class="topbar">
+    <span class="brand">BidMatch</span>
+    <div class="user-info">
+      <span class="company-label" id="dash-company"></span>
+      <div class="avatar" id="dash-avatar"></div>
+    </div>
+  </div>
+  <div class="dash-content">
+    <div class="stat-cards" id="stat-cards"></div>
+    <div class="cap-strip" id="cap-strip"></div>
+    <div class="profile-expanded" id="profile-expanded"></div>
+    <div class="rfp-cards" id="rfp-cards"></div>
+    <div class="dash-actions">
+      <button class="btn btn-secondary" id="update-rfp-btn">Update RFP list</button>
+      <button class="btn btn-secondary" id="start-over-btn">Start over</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Replace with your Cloudflare Worker URL after deploying
+  const WORKER_URL = 'bidmatch-worker.grantmarcus245.workers.dev';
+
+  // ── State ────────────────────────────────────────────────
+  const state = {
+    vendorProfile: null,
+    rfpUrls: [],
+    manualRfps: [],
+    scoredRfps: [],
+  };
+
+  // ── API Helper ───────────────────────────────────────────
+  async function callClaude(systemPrompt, userMessage, useWebSearch = false) {
+    const body = {
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 2000,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userMessage }]
+    };
+    if (useWebSearch) {
+      body.tools = [{ type: 'web_search_20250305', name: 'web_search' }];
+    }
+    const response = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!response.ok) {
+      const err = await response.text();
+      throw new Error(`API error ${response.status}: ${err}`);
+    }
+    const data = await response.json();
+    // Extract text from content blocks (handles tool_use interleaved responses)
+    const text = data.content
+      .filter(block => block.type === 'text')
+      .map(block => block.text)
+      .join('');
+    // Strip markdown code fences if present
+    return text.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
+  }
+
+  // ── Utilities ────────────────────────────────────────────
+  function showView(id) {
+    ['view1', 'view2', 'view4'].forEach(v => {
+      document.getElementById(v).classList.remove('active');
+    });
+    document.getElementById(id).classList.add('active');
+  }
+
+  function showLoading(text) {
+    document.getElementById('loading-text').textContent = text;
+    document.getElementById('loading').classList.add('active');
+  }
+
+  function hideLoading() {
+    document.getElementById('loading').classList.remove('active');
+  }
+
+  function getInitials(name) {
+    return (name || '')
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map(w => w[0] || '')
+      .join('')
+      .toUpperCase();
+  }
+
+  function truncate(str, n) {
+    return str.length > n ? str.slice(0, n) + '…' : str;
+  }
+
+  function isClosingSoon(dateStr) {
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    const now = new Date();
+    const diff = (d - now) / (1000 * 60 * 60 * 24);
+    return diff >= 0 && diff <= 7;
+  }
+
+  function scoreClass(score) {
+    if (score >= 75) return 'score-green';
+    if (score >= 50) return 'score-amber';
+    if (score >= 25) return 'score-orange';
+    return 'score-red';
+  }
+
+  function readinessPill(r) {
+    if (r === 'easy')   return 'pill-easy';
+    if (r === 'medium') return 'pill-medium';
+    return 'pill-hard';
+  }
+
+  // ── Password Gate ────────────────────────────────────────
+  const CORRECT_PASSWORD = 'bidmatch2025';
+
+  if (sessionStorage.getItem('bm_auth') === '1') {
+    document.getElementById('gate').classList.add('hidden');
+    showView('view1');
+  } else {
+    showView('view1'); // visible under the gate overlay
+  }
+
+  document.getElementById('gate-btn').addEventListener('click', tryPassword);
+  document.getElementById('gate-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') tryPassword();
+  });
+
+  function tryPassword() {
+    const val = document.getElementById('gate-input').value;
+    if (val === CORRECT_PASSWORD) {
+      sessionStorage.setItem('bm_auth', '1');
+      document.getElementById('gate').classList.add('hidden');
+    } else {
+      const inp = document.getElementById('gate-input');
+      inp.classList.remove('shake');
+      void inp.offsetWidth; // force reflow to restart animation
+      inp.classList.add('shake');
+      document.getElementById('gate-error').textContent = 'Incorrect password';
+      inp.addEventListener('animationend', () => inp.classList.remove('shake'), { once: true });
+    }
+  }
+
+  // ── View 1 ───────────────────────────────────────────────
+  let docCount = 1;
+
+  document.getElementById('add-doc-btn').addEventListener('click', () => {
+    if (docCount >= 3) return;
+    docCount++;
+    const container = document.getElementById('bid-docs');
+    const div = document.createElement('div');
+    div.className = 'form-group';
+    div.innerHTML = `
+      <label>Bid Document ${docCount}</label>
+      <textarea rows="8" placeholder="Paste the full text of a past bid submission here…"></textarea>
+    `;
+    container.appendChild(div);
+    if (docCount >= 3) document.getElementById('add-doc-btn').style.display = 'none';
+  });
+
+  document.getElementById('v1-next').addEventListener('click', async () => {
+    const companyName = document.getElementById('company-name').value.trim();
+    const textareas   = document.querySelectorAll('#bid-docs textarea');
+    const bidTexts    = Array.from(textareas).map(t => t.value.trim()).filter(Boolean);
+    const errEl       = document.getElementById('v1-error');
+
+    if (!companyName) {
+      errEl.textContent = 'Please enter your company name.';
+      return;
+    }
+    if (bidTexts.length === 0) {
+      errEl.textContent = 'Please paste at least one bid document.';
+      return;
+    }
+    errEl.textContent = '';
+
+    showLoading('Analyzing your bid history…');
+    try {
+      const raw = await callClaude(
+        `You are analyzing a vendor's past bid submissions. Extract their capability profile.
+Return ONLY valid JSON, no markdown, no explanation.
+Schema: { "companyName": string, "capabilities": string[], "categories": string[], "avgProjectSize": string, "geography": string[], "certs": string[], "summary": string }`,
+        `Company: ${companyName}\n\n${bidTexts.join('\n\n---\n\n')}`,
+        false
+      );
+      state.vendorProfile = JSON.parse(raw);
+      state.vendorProfile.companyName = state.vendorProfile.companyName || companyName;
+      hideLoading();
+      showProfileModal();
+    } catch (err) {
+      hideLoading();
+      errEl.textContent = 'Error: ' + err.message;
+    }
+  });
+
+  // ── Profile Modal ─────────────────────────────────────────
+  function showProfileModal() {
+    const p = state.vendorProfile;
+    document.getElementById('modal-company').textContent = p.companyName;
+    document.getElementById('modal-summary').textContent = p.summary || '';
+    renderTagGroup('modal-capabilities', p.capabilities || [], 'tag-blue');
+    renderTagGroup('modal-geography',    p.geography    || [], 'tag-gray');
+    renderTagGroup('modal-certs',        p.certs        || [], 'tag-green');
+    document.getElementById('profileModal').classList.add('active');
+  }
+
+  function renderTagGroup(containerId, items, cls) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+
+    items.forEach(item => {
+      const tag = document.createElement('span');
+      tag.className = `tag ${cls}`;
+      tag.innerHTML = `${escHtml(item)} <span class="tag-remove">✕</span>`;
+      tag.addEventListener('click', () => {
+        const idx = items.indexOf(item);
+        if (idx > -1) items.splice(idx, 1);
+        tag.remove();
+      });
+      container.appendChild(tag);
+    });
+
+    // Inline add-input
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'tag-add-input';
+    input.placeholder = '+ add';
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && input.value.trim()) {
+        const newItem = input.value.trim();
+        items.push(newItem);
+        input.value = '';
+        const newTag = document.createElement('span');
+        newTag.className = `tag ${cls}`;
+        newTag.innerHTML = `${escHtml(newItem)} <span class="tag-remove">✕</span>`;
+        newTag.addEventListener('click', () => {
+          const idx = items.indexOf(newItem);
+          if (idx > -1) items.splice(idx, 1);
+          newTag.remove();
+        });
+        container.insertBefore(newTag, input);
+      }
+    });
+    container.appendChild(input);
+  }
+
+  document.getElementById('modal-confirm').addEventListener('click', () => {
+    document.getElementById('profileModal').classList.remove('active');
+    renderRfpList();
+    showView('view2');
+  });
+
+  // ── View 2 ───────────────────────────────────────────────
+  const SAMPLE_URLS = [
+    'https://bids.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/839b1cea-2487-4229-9031-03c1d0804121',
+    'https://bids.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/edaa30b7-5d3c-41e8-9607-93de4001584f',
+    'https://bids.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/f5e2343c-6ee6-4474-8a16-c1d3a84db8bb',
+    'https://bids.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/3e8988a8-4225-41ee-952b-92a81b67cccb',
+    'https://bids.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/02c5be9b-d1e6-40ff-a2d1-3a7f0207ff9a',
+  ];
+
+  function renderRfpList() {
+    const list = document.getElementById('rfp-list');
+    list.innerHTML = '';
+
+    const urlItems    = state.rfpUrls.map((u, i) => ({ type: 'url',    value: u, idx: i }));
+    const manualItems = state.manualRfps.map((r, i) => ({ type: 'manual', value: r, idx: i }));
+    const allItems    = [...urlItems, ...manualItems];
+
+    if (allItems.length === 0) {
+      updateScoreBtn();
+      return;
+    }
+
+    allItems.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'rfp-list-item';
+
+      const label = item.type === 'url'
+        ? truncate(item.value, 60)
+        : escHtml(`${item.value.title || 'Untitled'} — ${item.value.agency || 'Unknown agency'}`);
+
+      const tagCls  = item.type === 'url' ? 'tag-gray' : 'tag-amber';
+      const tagText = item.type === 'url' ? 'URL' : 'Manual';
+
+      div.innerHTML = `
+        <span class="item-label">${label}</span>
+        <span class="item-tag ${tagCls}">${tagText}</span>
+        <button class="trash-btn" aria-label="Remove">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-1 14H6L5 6"/>
+            <path d="M10 11v6M14 11v6"/>
+            <path d="M9 6V4h6v2"/>
+          </svg>
+        </button>
+      `;
+
+      div.querySelector('.trash-btn').addEventListener('click', () => {
+        if (item.type === 'url') {
+          state.rfpUrls.splice(item.idx, 1);
+        } else {
+          state.manualRfps.splice(item.idx, 1);
+        }
+        renderRfpList();
+      });
+
+      list.appendChild(div);
+    });
+
+    updateScoreBtn();
+  }
+
+  function updateScoreBtn() {
+    const total = state.rfpUrls.length + state.manualRfps.length;
+    document.getElementById('score-btn').disabled = total === 0;
+  }
+
+  // URL add
+  document.getElementById('url-add-btn').addEventListener('click', addUrl);
+  document.getElementById('url-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addUrl();
+  });
+
+  function addUrl() {
+    const val   = document.getElementById('url-input').value.trim();
+    const errEl = document.getElementById('url-error');
+    if (!val) { errEl.textContent = ''; return; }
+    if (!val.includes('bidsandtenders.ca')) {
+      errEl.textContent = 'URL must be from bidsandtenders.ca';
+      return;
+    }
+    errEl.textContent = '';
+    state.rfpUrls.push(val);
+    document.getElementById('url-input').value = '';
+    renderRfpList();
+  }
+
+  // Manual form toggle
+  document.getElementById('manual-toggle').addEventListener('click', () => {
+    const form = document.getElementById('manual-form');
+    const btn  = document.getElementById('manual-toggle');
+    form.classList.toggle('open');
+    btn.textContent = form.classList.contains('open')
+      ? '▴ Add RFP manually (hide)'
+      : '＋ Add RFP manually ▾';
+  });
+
+  document.getElementById('m-add-btn').addEventListener('click', () => {
+    const title  = document.getElementById('m-title').value.trim();
+    const agency = document.getElementById('m-agency').value.trim();
+    const date   = document.getElementById('m-date').value;
+    const desc   = document.getElementById('m-desc').value.trim();
+    if (!title) return;
+    state.manualRfps.push({ title, agency, closingDate: date, description: desc });
+    document.getElementById('m-title').value = '';
+    document.getElementById('m-agency').value = '';
+    document.getElementById('m-date').value = '';
+    document.getElementById('m-desc').value = '';
+    renderRfpList();
+  });
+
+  document.getElementById('reset-rfps').addEventListener('click', () => {
+    state.rfpUrls   = [...SAMPLE_URLS];
+    state.manualRfps = [];
+    renderRfpList();
+  });
+
+  document.getElementById('score-btn').addEventListener('click', async () => {
+    showLoading('Fetching and scoring RFPs… this takes 20–30 seconds.');
+    try {
+      const raw = await callClaude(
+        `You are a procurement intelligence assistant helping vendors find the best RFP opportunities.
+
+For each URL provided: use web search to fetch the page and extract the RFP fields.
+For each manually-entered RFP: use the provided text directly.
+
+Score each RFP against the vendor profile. Consider: capability match, category alignment,
+certifications required vs held, project size fit, and geographic relevance.
+
+Return ONLY a valid JSON array, no markdown, no explanation.
+Each element: {
+  "id": string,
+  "title": string,
+  "agency": string,
+  "bidNumber": string,
+  "classification": string,
+  "closingDate": string,
+  "description": string,
+  "categories": string[],
+  "sourceUrl": string or null,
+  "score": number 0-100,
+  "fitSummary": string (2 sentences max),
+  "gaps": string[] (0-2 short phrases),
+  "readiness": "easy" | "medium" | "hard",
+  "confidence": "high" | "medium" | "low"
+}
+Set confidence to "low" if the RFP page had minimal description text.
+Sort by score descending.`,
+        `Vendor Profile:
+${JSON.stringify(state.vendorProfile, null, 2)}
+
+RFP URLs to fetch and score:
+${state.rfpUrls.join('\n')}
+
+Manually entered RFPs:
+${JSON.stringify(state.manualRfps)}`,
+        true
+      );
+      state.scoredRfps = JSON.parse(raw);
+      hideLoading();
+      renderDashboard();
+      showView('view4');
+    } catch (err) {
+      hideLoading();
+      alert('Error scoring RFPs: ' + err.message);
+    }
+  });
+
+  // ── View 4: Dashboard ─────────────────────────────────────
+  function renderDashboard() {
+    const p    = state.vendorProfile;
+    const rfps = state.scoredRfps;
+
+    // Top bar
+    document.getElementById('dash-company').textContent = p.companyName;
+    document.getElementById('dash-avatar').textContent  = getInitials(p.companyName);
+
+    // Stat cards
+    const avgScore     = rfps.length
+      ? Math.round(rfps.reduce((s, r) => s + r.score, 0) / rfps.length)
+      : 0;
+    const strongCount  = rfps.filter(r => r.score >= 75).length;
+
+    document.getElementById('stat-cards').innerHTML = `
+      <div class="stat-card">
+        <div class="stat-val">${avgScore}</div>
+        <div class="stat-lbl">Average match score</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">${strongCount}</div>
+        <div class="stat-lbl">Strong matches (≥&nbsp;75)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">${rfps.length}</div>
+        <div class="stat-lbl">RFPs analyzed</div>
+      </div>
+    `;
+
+    // Capability strip (top 5, expandable)
+    const allCaps  = p.capabilities || [];
+    const topCaps  = allCaps.slice(0, 5);
+    const strip    = document.getElementById('cap-strip');
+    const expanded = document.getElementById('profile-expanded');
+
+    strip.innerHTML =
+      `<span class="cap-label">Capabilities</span>` +
+      topCaps.map(c => `<span class="tag tag-navy">${escHtml(c)}</span>`).join('') +
+      (allCaps.length > 5
+        ? `<span class="cap-more">+${allCaps.length - 5} more</span>`
+        : '');
+
+    expanded.classList.remove('open');
+
+    strip.addEventListener('click', () => {
+      expanded.classList.toggle('open');
+      if (expanded.classList.contains('open')) {
+        expanded.innerHTML = `
+          <div style="margin-bottom:10px;">
+            <strong>All Capabilities:</strong>&nbsp;
+            ${allCaps.map(c => `<span class="tag tag-navy" style="margin:2px;">${escHtml(c)}</span>`).join('')}
+          </div>
+          <div style="margin-bottom:10px;">
+            <strong>Categories:</strong>&nbsp;
+            ${(p.categories||[]).map(c => `<span class="tag tag-blue" style="margin:2px;">${escHtml(c)}</span>`).join('')}
+          </div>
+          <div style="margin-bottom:10px;">
+            <strong>Geography:</strong>&nbsp;
+            ${(p.geography||[]).map(c => `<span class="tag tag-gray" style="margin:2px;">${escHtml(c)}</span>`).join('')}
+          </div>
+          <div>
+            <strong>Certifications:</strong>&nbsp;
+            ${(p.certs||[]).length
+              ? (p.certs||[]).map(c => `<span class="tag tag-green" style="margin:2px;">${escHtml(c)}</span>`).join('')
+              : '<span style="color:#9CA3AF;font-size:0.85rem;">None listed</span>'}
+          </div>
+        `;
+      }
+    });
+
+    // RFP cards
+    const cardsEl = document.getElementById('rfp-cards');
+    cardsEl.innerHTML = '';
+
+    rfps.forEach((rfp, idx) => {
+      const isBest    = idx === 0 && rfps.length > 0;
+      const urgent    = isClosingSoon(rfp.closingDate);
+      const dateText  = rfp.closingDate
+        ? `${urgent ? '⚠ ' : ''}${rfp.closingDate}`
+        : 'Closing TBD';
+      const gaps      = Array.isArray(rfp.gaps) ? rfp.gaps : [];
+
+      const card = document.createElement('div');
+      card.className = `rfp-card${isBest ? ' best-match' : ''}`;
+      card.innerHTML = `
+        <div class="rfp-body">
+          <div class="rfp-title-row">
+            <span class="rfp-title">${escHtml(rfp.title || 'Untitled RFP')}</span>
+            ${isBest ? '<span class="best-badge">Best match</span>' : ''}
+          </div>
+          <div class="rfp-meta">${escHtml([rfp.agency, rfp.bidNumber].filter(Boolean).join(' · '))}</div>
+          <div class="rfp-pills">
+            ${rfp.classification ? `<span class="pill pill-class">${escHtml(rfp.classification)}</span>` : ''}
+            <span class="pill pill-date${urgent ? ' urgent' : ''}">${escHtml(dateText)}</span>
+            <span class="pill ${readinessPill(rfp.readiness)}">${escHtml(rfp.readiness || 'unknown')}</span>
+          </div>
+          ${rfp.fitSummary ? `<p class="rfp-fit">${escHtml(rfp.fitSummary)}</p>` : ''}
+          ${gaps.length ? `
+            <div class="rfp-pills">
+              ${gaps.map(g => `<span class="pill pill-gap">Gap: ${escHtml(g)}</span>`).join('')}
+            </div>` : ''}
+          ${rfp.confidence === 'low'
+            ? '<p class="rfp-low-conf">⚠ Limited RFP detail — score is approximate</p>'
+            : ''}
+          ${rfp.sourceUrl
+            ? `<a href="${encodeURI(rfp.sourceUrl)}" target="_blank" rel="noopener noreferrer" class="rfp-link">View on Bids &amp; Tenders ↗</a>`
+            : ''}
+        </div>
+        <div class="score-badge ${scoreClass(rfp.score)}">
+          <span class="score-num">${rfp.score}</span>
+          <span class="score-lbl">score</span>
+        </div>
+      `;
+      cardsEl.appendChild(card);
+    });
+  }
+
+  document.getElementById('update-rfp-btn').addEventListener('click', () => {
+    renderRfpList();
+    showView('view2');
+  });
+
+  document.getElementById('start-over-btn').addEventListener('click', () => {
+    if (!confirm('Start over? All data will be cleared.')) return;
+    state.vendorProfile = null;
+    state.rfpUrls       = [];
+    state.manualRfps    = [];
+    state.scoredRfps    = [];
+    docCount = 1;
+    document.getElementById('bid-docs').innerHTML = `
+      <div class="form-group">
+        <label>Bid Document 1</label>
+        <textarea rows="8" placeholder="Paste the full text of a past bid submission here…"></textarea>
+      </div>`;
+    document.getElementById('company-name').value = '';
+    document.getElementById('add-doc-btn').style.display = '';
+    document.getElementById('v1-error').textContent = '';
+    showView('view1');
+  });
+
+  // ── Escape helper (XSS safety) ───────────────────────────
+  function escHtml(str) {
+    if (str == null) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+</script>
+</body>
+</html>
