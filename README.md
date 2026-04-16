@@ -1,6 +1,21 @@
 # BidMatch
 
-BidMatch is a vendor intelligence tool that matches your company's past bid submissions against open RFP opportunities from Bids & Tenders. Paste your past proposals, let AI extract your capabilities, then score a list of live tenders against your profile in seconds.
+BidMatch is a vendor intelligence dashboard that matches your company's capabilities against live RFP opportunities from Bids & Tenders. On first login it builds your profile from a company description and optional past bid documents, then automatically fetches and scores open tenders against your profile — ranking them by estimated win probability.
+
+## App Flow
+
+```
+Password Gate
+     ↓
+Onboarding (first time only — company info + optional bid docs → profile extraction)
+     ↓
+Dashboard (cached for session)
+  ├── 🎯 Opportunities — live RFPs scored by win probability + capabilities match
+  ├── 📁 My Bids       — previous submissions, inline view, "Use as template"
+  └── 👤 My Profile    — extracted profile, editable inline
+```
+
+The session is persisted in `sessionStorage` — refreshing returns directly to the dashboard without re-running onboarding or re-scraping RFPs.
 
 ## Setup Instructions
 
@@ -43,4 +58,6 @@ const WORKER_URL = 'https://bidmatch-worker.YOUR-SUBDOMAIN.workers.dev';
 ## Notes
 
 - **App password:** `bidmatch2025` — change it by editing the `CORRECT_PASSWORD` constant near the top of the `<script>` section in `index.html`.
-- **Sample RFPs:** The 5 sample Bids & Tenders URLs pre-loaded by "Reset to sample RFPs" are hardcoded in the `SAMPLE_URLS` array in `index.html`. Swap them for any valid `bidsandtenders.ca` tender URLs.
+- **Sample bids:** Three sample bid documents (Clearwater IT Services, North Bay Cybersecurity, French River ERP) are always included in the My Bids section as `SAMPLE_BIDS` in `index.html`. Users can upload additional bids on top of these.
+- **RFP sources:** On first login the app uses Claude's web search tool to find 8–10 currently open listings on `bids.bidsandtenders.ca`, then scores them in a second pass. Use the "↻ Refresh Opportunities" button in the sidebar to re-scrape at any time.
+- **Draft generation:** The Easy Apply modal generates full bid drafts using `claude-sonnet-4-20250514`. Selecting a previous bid in the "Base this on" dropdown uses that submission as a style and content reference.

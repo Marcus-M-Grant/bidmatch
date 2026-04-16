@@ -3,861 +3,848 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BidMatch</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <title>My Bids — Bids&Tenders</title>
   <style>
+    /* ── Reset & Base ────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: 'DM Sans', sans-serif;
-      background: #F5F6F8;
-      color: #1A1A2E;
-      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 14px;
+      color: #333333;
+      background: #ffffff;
     }
 
-    .brand {
-      font-family: 'DM Serif Display', serif;
-      color: #0F2B5B;
-    }
+    a { color: #2E7D6B; text-decoration: none; }
+    a:hover { text-decoration: underline; }
 
-    /* ── Views ────────────────────────────────── */
-    #view1, #view2, #view4 { display: none; }
-
-    #view1.active {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      padding: 40px 20px;
-    }
-
-    #view2.active {
-      display: block;
-      min-height: 100vh;
-    }
-
-    #view4.active { display: block; }
-
-    /* ── Password Gate ─────────────────────────── */
-    #gate {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #F5F6F8;
-      z-index: 1000;
-    }
-
-    #gate.hidden { display: none; }
-
-    .gate-card {
-      background: white;
-      border-radius: 16px;
-      padding: 48px 40px;
-      width: 100%;
-      max-width: 400px;
-      text-align: center;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-      border: 1px solid #E2E5EA;
-    }
-
-    .gate-logo { font-size: 2.2rem; display: block; margin-bottom: 6px; }
-    .gate-subtitle { color: #6B7280; font-size: 0.9rem; margin-bottom: 32px; }
-
-    .gate-input {
-      width: 100%;
-      padding: 10px 14px;
-      border: 1px solid #E2E5EA;
-      border-radius: 8px;
-      font-family: inherit;
-      font-size: 0.95rem;
-      outline: none;
-      transition: border-color 0.2s;
-      margin-bottom: 10px;
-    }
-
-    .gate-input:focus { border-color: #0F2B5B; }
-
-    .gate-input.shake {
-      animation: shake 0.4s ease;
-      border-color: #C0392B;
-    }
-
-    .gate-error {
-      color: #C0392B;
-      font-size: 0.85rem;
-      margin-bottom: 10px;
-      min-height: 20px;
-    }
-
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      20%       { transform: translateX(-8px); }
-      40%       { transform: translateX(8px); }
-      60%       { transform: translateX(-6px); }
-      80%       { transform: translateX(6px); }
-    }
-
-    /* ── Buttons ──────────────────────────────── */
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 10px 20px;
-      border-radius: 8px;
-      font-family: inherit;
-      font-size: 0.95rem;
-      font-weight: 500;
-      cursor: pointer;
+    /* ── Buttons ─────────────────────────────── */
+    .btn-teal {
+      background: #2E7D6B;
+      color: #ffffff;
       border: none;
-      transition: all 0.2s;
-    }
-
-    .btn-primary {
-      background: #0F2B5B;
-      color: white;
-    }
-
-    .btn-primary:hover:not(:disabled) { background: #0a1f44; }
-
-    .btn-primary:disabled {
-      opacity: 0.45;
-      cursor: not-allowed;
-    }
-
-    .btn-secondary {
-      background: white;
-      color: #0F2B5B;
-      border: 1px solid #E2E5EA;
-    }
-
-    .btn-secondary:hover { border-color: #B0B8C4; }
-
-    .btn-full { width: 100%; }
-
-    /* ── Forms ────────────────────────────────── */
-    .form-group { margin-bottom: 18px; }
-
-    label {
-      display: block;
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: #374151;
-      margin-bottom: 6px;
-    }
-
-    input[type="text"],
-    input[type="date"],
-    textarea {
-      width: 100%;
-      padding: 10px 14px;
-      border: 1px solid #E2E5EA;
-      border-radius: 8px;
-      font-family: inherit;
-      font-size: 0.95rem;
-      outline: none;
-      transition: border-color 0.2s;
-      color: #1A1A2E;
-      background: white;
-    }
-
-    input[type="text"]:focus,
-    input[type="date"]:focus,
-    textarea:focus { border-color: #0F2B5B; }
-
-    textarea { resize: vertical; }
-
-    .error-msg {
-      color: #C0392B;
-      font-size: 0.84rem;
-      margin-top: 6px;
-      min-height: 18px;
-    }
-
-    /* ── Cards ────────────────────────────────── */
-    .card {
-      background: white;
-      border-radius: 12px;
-      border: 1px solid #E2E5EA;
-      padding: 32px;
-      transition: border-color 0.2s;
-    }
-
-    .card:hover { border-color: #B0B8C4; }
-
-    /* ── View 1 ───────────────────────────────── */
-    #view1 .card { width: 100%; max-width: 640px; }
-
-    .add-doc-link {
-      color: #0F2B5B;
-      font-size: 0.875rem;
+      padding: 7px 16px;
+      font-size: 13px;
+      font-family: Arial, sans-serif;
+      font-weight: bold;
       cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      margin-bottom: 18px;
-      font-weight: 500;
-      background: none;
-      border: none;
-      font-family: inherit;
-      padding: 0;
-    }
-
-    .add-doc-link:hover { text-decoration: underline; }
-
-    /* ── Loading Overlay ──────────────────────── */
-    #loading {
-      position: fixed;
-      inset: 0;
-      background: rgba(255,255,255,0.92);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 2000;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    #loading.active { display: flex; }
-
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid #E2E5EA;
-      border-top-color: #0F2B5B;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    #loading-text {
-      color: #374151;
-      font-size: 0.95rem;
-      font-weight: 500;
-    }
-
-    /* ── Profile Modal ────────────────────────── */
-    #profileModal {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.48);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 1500;
-      padding: 20px;
-    }
-
-    #profileModal.active { display: flex; }
-
-    .modal-card {
-      background: white;
-      border-radius: 16px;
-      padding: 36px;
-      width: 100%;
-      max-width: 560px;
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-
-    .modal-card h2 {
-      font-size: 1.4rem;
-      color: #0F2B5B;
-      margin-bottom: 8px;
-    }
-
-    .modal-summary {
-      color: #6B7280;
-      font-size: 0.9rem;
-      margin-bottom: 24px;
-      line-height: 1.6;
-    }
-
-    .tag-group { margin-bottom: 20px; }
-
-    .tag-group > label {
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: #9CA3AF;
-      margin-bottom: 8px;
-    }
-
-    .tag-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      align-items: center;
-    }
-
-    .tag {
+      border-radius: 3px;
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      padding: 4px 10px;
-      border-radius: 100px;
-      font-size: 0.8rem;
-      font-weight: 500;
-      cursor: pointer;
-      user-select: none;
-      transition: opacity 0.15s;
-    }
-
-    .tag:hover { opacity: 0.75; }
-    .tag-blue  { background: #EFF6FF; color: #1D4ED8; }
-    .tag-gray  { background: #F3F4F6; color: #374151; }
-    .tag-green { background: #ECFDF5; color: #065F46; }
-    .tag-navy  { background: #EEF2FF; color: #0F2B5B; }
-    .tag-amber { background: #FFFBEB; color: #92400E; }
-
-    .tag-remove { font-size: 0.7rem; opacity: 0.55; }
-
-    .tag-add-input {
-      padding: 3px 10px;
-      border: 1px dashed #D1D5DB;
-      border-radius: 100px;
-      font-family: inherit;
-      font-size: 0.8rem;
-      outline: none;
-      width: 110px;
-      background: transparent;
-      color: #374151;
-    }
-
-    .tag-add-input:focus { border-color: #0F2B5B; }
-
-    /* ── View 2 ───────────────────────────────── */
-    #view2 .inner {
-      max-width: 760px;
-      margin: 0 auto;
-      padding: 40px 20px;
-    }
-
-    .view2-header { margin-bottom: 28px; }
-
-    .view2-header h1 {
-      font-size: 1.5rem;
-      font-weight: 600;
-      color: #0F2B5B;
-      margin-bottom: 6px;
-    }
-
-    .view2-header p { color: #6B7280; font-size: 0.9rem; }
-
-    .url-row { display: flex; gap: 10px; margin-bottom: 4px; }
-    .url-row input { flex: 1; }
-    .url-row .btn { white-space: nowrap; padding: 10px 20px; }
-
-    .rfp-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
-
-    .rfp-list-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 14px;
-      background: white;
-      border: 1px solid #E2E5EA;
-      border-radius: 8px;
-      font-size: 0.875rem;
-    }
-
-    .rfp-list-item .item-label {
-      flex: 1;
-      color: #374151;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      min-width: 0;
-    }
-
-    .item-tag {
-      padding: 2px 9px;
-      border-radius: 100px;
-      font-size: 0.72rem;
-      font-weight: 500;
-      flex-shrink: 0;
-    }
-
-    .trash-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: #9CA3AF;
-      padding: 2px;
-      display: flex;
-      align-items: center;
-      flex-shrink: 0;
-      transition: color 0.2s;
-    }
-
-    .trash-btn:hover { color: #C0392B; }
-
-    .manual-toggle {
-      color: #0F2B5B;
-      font-size: 0.875rem;
-      cursor: pointer;
-      font-weight: 500;
-      background: none;
-      border: none;
-      padding: 0;
-      font-family: inherit;
-      margin-bottom: 16px;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .manual-toggle:hover { text-decoration: underline; }
-
-    .manual-form {
-      display: none;
-      background: white;
-      border: 1px solid #E2E5EA;
-      border-radius: 12px;
-      padding: 24px;
-      margin-bottom: 16px;
-    }
-
-    .manual-form.open { display: block; }
-
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-bottom: 16px;
-    }
-
-    .form-row .form-group { margin-bottom: 0; }
-
-    .view2-bottom {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding-top: 16px;
-      border-top: 1px solid #E2E5EA;
-      margin-top: 8px;
-    }
-
-    .reset-link {
-      color: #6B7280;
-      font-size: 0.85rem;
-      cursor: pointer;
-      background: none;
-      border: none;
-      font-family: inherit;
-      padding: 0;
-    }
-
-    .reset-link:hover { color: #0F2B5B; text-decoration: underline; }
-
-    /* ── View 4 Dashboard ─────────────────────── */
-    .topbar {
-      background: white;
-      border-bottom: 1px solid #E2E5EA;
-      padding: 14px 32px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-
-    .topbar .brand { font-size: 1.4rem; }
-
-    .user-info { display: flex; align-items: center; gap: 12px; }
-
-    .company-label { font-size: 0.875rem; color: #374151; }
-
-    .avatar {
-      width: 36px;
-      height: 36px;
-      background: #0F2B5B;
-      color: white;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.72rem;
-      font-weight: 700;
-      letter-spacing: 0.02em;
-      flex-shrink: 0;
-    }
-
-    .dash-content {
-      max-width: 880px;
-      margin: 0 auto;
-      padding: 32px 20px;
-    }
-
-    .stat-cards {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      margin-bottom: 20px;
-    }
-
-    .stat-card {
-      background: #EEF0F4;
-      border-radius: 12px;
-      padding: 20px 22px;
-    }
-
-    .stat-val {
-      font-size: 2rem;
-      font-weight: 600;
-      color: #0F2B5B;
-      line-height: 1;
-      margin-bottom: 4px;
-    }
-
-    .stat-lbl { font-size: 0.8rem; color: #6B7280; }
-
-    .cap-strip {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      align-items: center;
-      margin-bottom: 6px;
-      padding: 12px 16px;
-      background: white;
-      border: 1px solid #E2E5EA;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: border-color 0.2s;
-    }
-
-    .cap-strip:hover { border-color: #B0B8C4; }
-
-    .cap-label { font-size: 0.75rem; color: #9CA3AF; margin-right: 2px; }
-
-    .cap-more { font-size: 0.8rem; color: #9CA3AF; }
-
-    .profile-expanded {
-      display: none;
-      margin-bottom: 20px;
-      padding: 16px 20px;
-      background: white;
-      border: 1px solid #E2E5EA;
-      border-top: none;
-      border-radius: 0 0 10px 10px;
-      font-size: 0.85rem;
-      line-height: 1.8;
-    }
-
-    .profile-expanded.open { display: block; }
-
-    .rfp-cards { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
-
-    .rfp-card {
-      background: white;
-      border: 1px solid #E2E5EA;
-      border-radius: 12px;
-      padding: 20px;
-      display: flex;
-      gap: 16px;
-      transition: border-color 0.2s;
-    }
-
-    .rfp-card:hover { border-color: #B0B8C4; }
-
-    .rfp-card.best-match { border-left: 3px solid #0F2B5B; }
-
-    .rfp-body { flex: 1; min-width: 0; }
-
-    .rfp-title-row {
-      display: flex;
-      align-items: flex-start;
-      gap: 8px;
-      margin-bottom: 3px;
-    }
-
-    .rfp-title {
-      font-weight: 600;
-      font-size: 0.95rem;
-      color: #111827;
       line-height: 1.4;
     }
+    .btn-teal:hover:not(:disabled) { background: #1B5E50; }
+    .btn-teal:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    .best-badge {
-      display: inline-flex;
-      align-items: center;
-      padding: 2px 9px;
-      background: #EEF2FF;
-      color: #0F2B5B;
-      border-radius: 100px;
-      font-size: 0.72rem;
-      font-weight: 600;
-      white-space: nowrap;
-      flex-shrink: 0;
-      margin-top: 2px;
+    .btn-teal-sm {
+      background: #2E7D6B;
+      color: #ffffff;
+      border: none;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-family: Arial, sans-serif;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+    .btn-teal-sm:hover { background: #1B5E50; }
+
+    .btn-outline-sm {
+      background: #ffffff;
+      color: #2E7D6B;
+      border: 1px solid #2E7D6B;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-family: Arial, sans-serif;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+    .btn-outline-sm:hover { background: #f0f8f6; }
+
+    /* ── Loading Overlay ──────────────────────── */
+    #loading {
+      position: fixed; inset: 0;
+      background: rgba(255,255,255,0.88);
+      display: none; align-items: center; justify-content: center;
+      z-index: 9000; flex-direction: column; gap: 12px;
+    }
+    #loading.active { display: flex; }
+
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid #dddddd;
+      border-top-color: #2E7D6B;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loading-text { color: #555555; font-size: 13px; }
+
+    /* ── Skeleton ────────────────────────────── */
+    @keyframes shimmer {
+      0%   { background-position: -400px 0; }
+      100% { background-position:  400px 0; }
+    }
+    .skeleton {
+      background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+      background-size: 400px 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 3px;
+      display: inline-block;
     }
 
-    .rfp-meta { font-size: 0.8rem; color: #9CA3AF; margin-bottom: 10px; }
+    /* ── Password Gate ───────────────────────── */
+    #gate {
+      position: fixed; inset: 0;
+      background: #f0f8f6;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 8000;
+    }
+    #gate.hidden { display: none; }
 
-    .rfp-pills {
+    .gate-card {
+      background: #ffffff;
+      border: 1px solid #cccccc;
+      padding: 36px 40px;
+      width: 100%; max-width: 380px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .gate-input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #cccccc;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      outline: none;
+      margin-bottom: 10px;
+      margin-top: 18px;
+    }
+    .gate-input:focus { border-color: #2E7D6B; }
+    .gate-error { color: #C0392B; font-size: 12px; margin-bottom: 6px; min-height: 16px; }
+
+    /* ── Modal overlay ───────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: none; align-items: center; justify-content: center;
+      z-index: 5000; padding: 20px;
+    }
+    .modal-overlay.active { display: flex; }
+
+    .modal-card {
+      background: #ffffff;
+      border: 1px solid #cccccc;
+      padding: 26px 30px;
+      width: 100%; max-width: 600px;
+      max-height: 90vh; overflow-y: auto;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+
+    .modal-hdr {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 18px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #2E7D6B;
+    }
+    .modal-hdr h2 { font-size: 1.05rem; font-weight: bold; color: #1B5E50; }
+
+    .modal-close {
+      background: none; border: none;
+      font-size: 18px; cursor: pointer; color: #888; padding: 2px 6px; line-height: 1;
+    }
+    .modal-close:hover { color: #333; }
+
+    /* Form inside modals */
+    .form-group { margin-bottom: 13px; }
+    .form-group label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 3px; }
+    .form-ctrl {
+      width: 100%; padding: 7px 10px;
+      border: 1px solid #cccccc;
+      font-family: Arial, sans-serif; font-size: 13px; outline: none;
+    }
+    .form-ctrl:focus { border-color: #2E7D6B; }
+    textarea.form-ctrl { resize: vertical; }
+    select.form-ctrl { background: #ffffff; }
+
+    .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-row-2 .form-group { margin-bottom: 0; }
+    .hint-text  { font-size: 11px; color: #888; margin-top: 3px; }
+    .form-divider { border: none; border-top: 1px solid #eeeeee; margin: 16px 0; }
+    .slabel { font-size: 11px; font-weight: bold; text-transform: uppercase; color: #888; letter-spacing: 0.06em; display: block; margin-bottom: 8px; }
+    .add-doc-btn { color: #2E7D6B; font-size: 12px; cursor: pointer; background: none; border: none; font-family: Arial, sans-serif; padding: 0; margin-bottom: 12px; }
+    .add-doc-btn:hover { text-decoration: underline; }
+    .form-error  { color: #C0392B; font-size: 12px; margin-top: 4px; min-height: 16px; }
+
+    /* ── Main Page ───────────────────────────── */
+    #main-page { display: none; }
+    #main-page.active { display: block; }
+
+    /* Setup banner */
+    #setup-banner {
+      display: none;
+      background: #fff8e1;
+      border-bottom: 1px solid #ffe082;
+      padding: 7px 20px;
+      font-size: 13px; color: #555;
+    }
+    #setup-banner.show { display: block; }
+
+    /* ── Page Header ─────────────────────────── */
+    .pg-header {
       display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 10px 20px 8px;
+      border-bottom: 1px solid #eeeeee;
+    }
+
+    /* ── Nav Bar ─────────────────────────────── */
+    .pg-nav {
+      border-top: 1px solid #cccccc;
+      border-bottom: 1px solid #cccccc;
+      padding: 0 20px;
+      background: #ffffff;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
       flex-wrap: wrap;
-      gap: 6px;
-      align-items: center;
-      margin-bottom: 9px;
+      gap: 0;
+      min-height: 36px;
     }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      padding: 3px 9px;
-      border-radius: 100px;
-      font-size: 0.75rem;
-      font-weight: 500;
+    .pg-nav a {
+      color: #2E7D6B;
+      font-size: 13px;
+      padding: 9px 0;
+      display: inline-block;
     }
+    .pg-nav .sep { color: #cccccc; margin: 0 8px; user-select: none; }
+    .pg-nav a.active { font-weight: bold; text-decoration: underline; }
 
-    .pill-class       { background: #F3F4F6; color: #374151; }
-    .pill-date        { background: transparent; color: #6B7280; font-weight: 400; }
-    .pill-date.urgent { color: #C0392B; font-weight: 500; }
-    .pill-easy        { background: #ECFDF5; color: #065F46; }
-    .pill-medium      { background: #FFFBEB; color: #92400E; }
-    .pill-hard        { background: #FEF2F2; color: #991B1B; }
-    .pill-gap         { background: #FFFBEB; color: #92400E; }
+    /* ── Content wrapper ─────────────────────── */
+    .pg-content { max-width: 1000px; padding: 0 20px 40px; }
 
-    .rfp-fit {
-      font-size: 0.8125rem;
-      color: #6B7280;
-      margin-bottom: 9px;
-      line-height: 1.55;
-    }
-
-    .rfp-low-conf {
-      font-size: 0.775rem;
-      color: #9CA3AF;
-      font-style: italic;
-      margin-bottom: 8px;
-    }
-
-    .rfp-link {
-      font-size: 0.8rem;
-      color: #0F2B5B;
-      text-decoration: none;
-      font-weight: 500;
-    }
-
-    .rfp-link:hover { text-decoration: underline; }
-
-    .score-badge {
-      width: 66px;
-      height: 66px;
-      border-radius: 12px;
+    /* Page title row */
+    .title-row {
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      align-self: flex-start;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 16px 0 10px;
+    }
+    .title-row h1 { font-size: 1.5rem; font-weight: bold; margin-bottom: 6px; }
+    .title-row p  { color: #555555; font-size: 13px; line-height: 1.5; }
+
+    .section-divider { border: none; border-top: 1px solid #dddddd; margin: 0; }
+
+    .sec-h2 { font-size: 1.2rem; font-weight: bold; padding: 16px 0 8px; color: #222222; }
+
+    /* ── AI Recommendations Section ──────────── */
+    #ai-section {
+      margin: 12px 0 20px;
+      padding: 14px 16px;
+      background: #f0f8f6;
+      border-left: 4px solid #2E7D6B;
     }
 
-    .score-num  { font-size: 1.5rem; font-weight: 700; line-height: 1; }
-    .score-lbl  { font-size: 0.58rem; font-weight: 600; opacity: 0.75; text-transform: uppercase; letter-spacing: 0.05em; }
-
-    .score-green  { background: #ECFDF5; color: #1D9E75; }
-    .score-amber  { background: #FFFBEB; color: #D4860A; }
-    .score-orange { background: #FFF4ED; color: #C2540A; }
-    .score-red    { background: #FEF2F2; color: #C0392B; }
-
-    .dash-actions {
+    .ai-hdr {
       display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
       gap: 12px;
-      margin-top: 32px;
-      padding-top: 24px;
-      border-top: 1px solid #E2E5EA;
+      flex-wrap: wrap;
     }
 
-    /* ── Mobile ───────────────────────────────── */
-    @media (max-width: 600px) {
-      .stat-cards { grid-template-columns: 1fr; }
+    .ai-hdr-left  { display: flex; align-items: flex-start; flex-direction: column; gap: 3px; }
+    .ai-hdr-title { display: flex; align-items: center; gap: 8px; }
 
-      .form-row { grid-template-columns: 1fr; }
+    .ai-title    { font-size: 1rem; font-weight: bold; color: #1B5E50; }
+    .ai-subtitle { font-size: 12px; color: #666666; }
 
-      .topbar { padding: 12px 16px; }
+    .ai-badge {
+      background: #2E7D6B; color: #ffffff;
+      font-size: 9px; padding: 2px 6px; border-radius: 2px;
+      font-weight: bold; letter-spacing: 0.04em; white-space: nowrap;
+    }
 
-      .rfp-card { flex-direction: column-reverse; }
+    .ai-hdr-right { display: flex; align-items: center; gap: 10px; }
+    .last-updated { font-size: 11px; color: #888888; white-space: nowrap; }
 
-      .score-badge {
-        width: 100%;
-        flex-direction: row;
-        gap: 8px;
-        height: auto;
-        padding: 10px 14px;
-        justify-content: flex-start;
-        border-radius: 8px;
-      }
+    /* AI table */
+    .ai-table {
+      width: 100%; border-collapse: collapse;
+      font-size: 13px;
+      border: 1px solid #dddddd;
+    }
+    .ai-table th {
+      padding: 8px 10px; text-align: left;
+      background: #e0eeeb;
+      border: 1px solid #cccccc;
+      font-weight: bold; font-size: 12px; color: #1B5E50;
+    }
+    .ai-table td {
+      padding: 9px 10px;
+      border: 1px solid #dddddd;
+      vertical-align: top;
+      background: #ffffff;
+    }
+    .ai-table tr:nth-child(even) td { background: #f9fdfc; }
 
-      .dash-actions { flex-direction: column; }
+    .opp-name-link {
+      color: #2E7D6B; font-weight: bold; font-size: 13px;
+      cursor: pointer; border: none; background: none;
+      font-family: Arial, sans-serif; padding: 0; text-align: left;
+    }
+    .opp-name-link:hover { text-decoration: underline; }
 
-      .gate-card { padding: 36px 24px; }
+    .opp-agency { color: #888888; font-size: 11px; margin-top: 2px; }
+    .opp-bidnum { color: #aaaaaa; font-size: 11px; }
+
+    .score-large { font-size: 1.25rem; font-weight: bold; display: block; line-height: 1; }
+    .score-lbl   { font-size: 10px; color: #888888; display: block; margin-top: 1px; }
+    .sc-green { color: #2E7D6B; }
+    .sc-amber { color: #E6950A; }
+    .sc-red   { color: #C0392B; }
+
+    .win-signal { font-size: 12px; color: #555555; font-style: italic; line-height: 1.45; }
+
+    .close-date        { font-size: 13px; color: #333; }
+    .close-date.urgent { color: #C0392B; font-weight: bold; }
+
+    .ai-disclaimer { font-size: 11px; color: #888888; margin-top: 10px; }
+
+    .ai-empty {
+      padding: 14px;
+      background: #ffffff;
+      border: 1px solid #dddddd;
+      font-size: 13px; color: #555;
+      text-align: center;
+    }
+
+    /* Skeleton rows in AI table */
+    .skel-row td { background: #ffffff !important; }
+
+    /* ── Bid Submission Table ─────────────────── */
+    .data-table {
+      width: 100%; border-collapse: collapse;
+      font-size: 13px;
+      border: 1px solid #dddddd;
+    }
+    .data-table th {
+      padding: 8px 10px; text-align: left;
+      background: #eeeeee;
+      border: 1px solid #dddddd;
+      font-weight: bold; font-size: 12px;
+    }
+    .data-table td {
+      padding: 8px 10px;
+      border: 1px solid #dddddd;
+      vertical-align: middle;
+    }
+    .data-table tbody tr:nth-child(4n+3) td,
+    .data-table tbody tr:nth-child(4n+4) td { background: #f9f9f9; }
+
+    .bid-link {
+      color: #2E7D6B; font-weight: bold;
+      cursor: pointer; border: none; background: none;
+      font-family: Arial, sans-serif; font-size: 13px; padding: 0; text-align: left;
+    }
+    .bid-link:hover { text-decoration: underline; }
+
+    .detail-row { display: none; }
+    .detail-row.open { display: table-row; }
+    .detail-cell {
+      background: #f0f8f6 !important;
+      padding: 12px 16px !important;
+    }
+    .detail-summary { color: #555; font-size: 13px; margin-bottom: 8px; line-height: 1.55; }
+    .kw-wrap { display: flex; flex-wrap: wrap; gap: 4px; }
+    .kw {
+      background: #d6ede8; color: #1B5E50;
+      padding: 2px 8px; font-size: 11px; border-radius: 2px; font-weight: 500;
+    }
+
+    .opill {
+      display: inline-block; padding: 2px 8px;
+      border-radius: 2px; font-size: 11px; font-weight: bold;
+    }
+    .op-won       { background: #d6ede8; color: #1B5E50; }
+    .op-lost      { background: #fde8e6; color: #C0392B; }
+    .op-submitted { background: #eeeeee; color: #555555; }
+    .op-pending   { background: #fff8e1; color: #E6950A; }
+
+    .add-bid-link {
+      color: #2E7D6B; font-size: 13px;
+      cursor: pointer; border: none; background: none;
+      font-family: Arial, sans-serif; padding: 0;
+      display: inline-block; margin-top: 10px;
+    }
+    .add-bid-link:hover { text-decoration: underline; }
+
+    /* ── Easy Apply Modal ────────────────────── */
+    #ea-modal {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55);
+      display: none; align-items: stretch; justify-content: center;
+      z-index: 6000;
+    }
+    #ea-modal.active { display: flex; }
+
+    .ea-wrap {
+      background: #ffffff;
+      width: 100%; max-width: 1000px;
+      margin: 0 auto;
+      display: flex; flex-direction: column;
+      height: 100vh; overflow: hidden;
+    }
+
+    .ea-hdr {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 13px 20px;
+      border-bottom: 1px solid #dddddd;
+      background: #f0f8f6;
+      flex-shrink: 0;
+    }
+    .ea-hdr h2 { font-size: 1rem; font-weight: bold; color: #1B5E50; }
+
+    .ea-body {
+      display: grid; grid-template-columns: 1fr 1fr;
+      flex: 1; min-height: 0; overflow: hidden;
+    }
+
+    .ea-left {
+      padding: 20px;
+      border-right: 1px solid #dddddd;
+      overflow-y: auto;
+    }
+    .ea-right {
+      padding: 20px;
+      overflow-y: auto;
+      display: flex; flex-direction: column;
+    }
+
+    .ea-rfp-title { font-size: 1rem; font-weight: bold; color: #1B5E50; margin-bottom: 3px; }
+    .ea-rfp-meta  { font-size: 12px; color: #888888; margin-bottom: 14px; }
+
+    .ea-circles { display: flex; gap: 14px; margin-bottom: 14px; }
+
+    .metric-circ {
+      width: 86px; height: 86px; border-radius: 50%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; border: 3px solid;
+    }
+    .mc-green { border-color: #2E7D6B; background: #f0f8f6; color: #2E7D6B; }
+    .mc-amber { border-color: #E6950A; background: #fff8e1; color: #E6950A; }
+    .mc-red   { border-color: #C0392B; background: #fde8e6; color: #C0392B; }
+
+    .mc-val { font-size: 1.3rem; font-weight: bold; line-height: 1.1; display: block; }
+    .mc-lbl { font-size: 9px; color: #888888; margin-top: 1px; display: block; }
+
+    .ea-desc {
+      font-size: 12px; color: #555555; line-height: 1.65;
+      max-height: 300px; overflow-y: auto;
+      border: 1px solid #eeeeee; padding: 10px;
+      background: #fafafa; white-space: pre-wrap;
+      margin-bottom: 12px;
+    }
+
+    .ea-right-title { font-size: 0.95rem; font-weight: bold; color: #1B5E50; margin-bottom: 14px; }
+
+    .draft-spinner {
+      display: none; align-items: center; gap: 8px;
+      font-size: 13px; color: #555555; margin: 10px 0;
+    }
+    .draft-spinner.active { display: flex; }
+
+    .draft-box { display: none; flex-direction: column; }
+    .draft-box.active { display: flex; }
+
+    .draft-text {
+      font-size: 12px; line-height: 1.7; color: #333333;
+      white-space: pre-wrap;
+      background: #fafafa; border: 1px solid #dddddd;
+      padding: 14px; overflow-y: auto;
+      max-height: 360px; margin-bottom: 10px;
+    }
+
+    .draft-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .draft-error   { color: #C0392B; font-size: 12px; margin: 6px 0; }
+
+    /* ── Mobile ──────────────────────────────── */
+    @media (max-width: 700px) {
+      .ea-body { grid-template-columns: 1fr; overflow-y: auto; }
+      .ea-wrap { height: auto; overflow-y: auto; }
+      .ea-left { border-right: none; border-bottom: 1px solid #dddddd; }
+      .form-row-2 { grid-template-columns: 1fr; }
+      .pg-nav { overflow-x: auto; white-space: nowrap; }
+      .title-row { flex-direction: column; gap: 10px; }
+      .ai-hdr { flex-direction: column; }
     }
   </style>
 </head>
 <body>
 
-<!-- ── Password Gate ──────────────────────────────────── -->
+<!-- ════════════════════════════════════════════
+     PASSWORD GATE
+════════════════════════════════════════════ -->
 <div id="gate">
   <div class="gate-card">
-    <span class="brand gate-logo">BidMatch</span>
-    <p class="gate-subtitle">Vendor Intelligence for Bids &amp; Tenders</p>
+    <img src="https://ic9.esolg.ca/235250_BidsandTenders/en/resources/logos/BT_NewLogo_NameandSymol-colored.png"
+         height="48" alt="bids&tenders" style="margin-bottom:6px;">
+    <p style="font-size:13px; color:#555; margin-bottom:2px;">My Bids</p>
     <div class="gate-error" id="gate-error"></div>
-    <input type="password" id="gate-input" class="gate-input" placeholder="Enter password" autocomplete="current-password">
-    <button class="btn btn-primary btn-full" id="gate-btn">Enter</button>
+    <input type="password" id="gate-input" class="gate-input" placeholder="Password" autocomplete="current-password">
+    <button class="btn-teal" id="gate-btn" style="width:100%;">Sign In</button>
   </div>
 </div>
 
-<!-- ── Loading Overlay ────────────────────────────────── -->
+<!-- ════════════════════════════════════════════
+     GLOBAL LOADING OVERLAY
+════════════════════════════════════════════ -->
 <div id="loading">
   <div class="spinner"></div>
   <span id="loading-text">Loading…</span>
 </div>
 
-<!-- ── Profile Review Modal ───────────────────────────── -->
-<div id="profileModal">
+<!-- ════════════════════════════════════════════
+     ONBOARDING MODAL
+════════════════════════════════════════════ -->
+<div class="modal-overlay" id="onboard-modal">
   <div class="modal-card">
-    <h2 id="modal-company"></h2>
-    <p class="modal-summary" id="modal-summary"></p>
-    <div class="tag-group">
-      <label>Capabilities</label>
-      <div class="tag-list" id="modal-capabilities"></div>
+    <div class="modal-hdr">
+      <h2>Set up your BidMatch profile</h2>
+      <button class="modal-close" id="onboard-dismiss-btn">✕</button>
     </div>
-    <div class="tag-group">
-      <label>Geography</label>
-      <div class="tag-list" id="modal-geography"></div>
-    </div>
-    <div class="tag-group">
-      <label>Certifications</label>
-      <div class="tag-list" id="modal-certs"></div>
-    </div>
-    <button class="btn btn-primary btn-full" id="modal-confirm" style="margin-top:8px;">
-      Looks good — Add RFPs →
-    </button>
-  </div>
-</div>
 
-<!-- ── View 1: Upload Vendor Bids ─────────────────────── -->
-<div id="view1">
-  <div class="card" style="width:100%;max-width:640px;">
-    <div style="margin-bottom:28px;">
-      <span class="brand" style="font-size:1.9rem; display:block; margin-bottom:4px;">BidMatch</span>
-      <h1 style="font-size:1.25rem; font-weight:600; color:#0F2B5B; margin-bottom:5px;">Upload Your Bid History</h1>
-      <p style="color:#6B7280; font-size:0.9rem;">Paste past bid submissions so BidMatch can learn your company&rsquo;s capabilities.</p>
+    <span class="slabel">Step 1 — Company Info</span>
+    <div class="form-row-2" style="margin-bottom:12px;">
+      <div class="form-group">
+        <label>Company Name <span style="color:#C0392B;">*</span></label>
+        <input type="text" id="ob-company" class="form-ctrl" placeholder="e.g. Nexus Technology Inc.">
+      </div>
+      <div class="form-group">
+        <label>Industry / Sector</label>
+        <input type="text" id="ob-industry" class="form-ctrl" placeholder="e.g. IT Services, Construction">
+      </div>
     </div>
     <div class="form-group">
-      <label for="company-name">Your Company</label>
-      <input type="text" id="company-name" placeholder="e.g. Acme Consulting Inc.">
+      <label>Company Description</label>
+      <textarea id="ob-desc" class="form-ctrl" rows="3" placeholder="Brief description of what your company does…"></textarea>
     </div>
-    <div id="bid-docs">
+
+    <hr class="form-divider">
+    <span class="slabel">Step 2 — Past Bid Submissions (optional)</span>
+    <p class="hint-text" style="margin-bottom:12px;">Paste up to 3 previous bid submissions. Don't have any? We'll use sample data.</p>
+
+    <div id="ob-docs">
       <div class="form-group">
         <label>Bid Document 1</label>
-        <textarea rows="8" placeholder="Paste the full text of a past bid submission here…"></textarea>
+        <textarea class="form-ctrl" rows="5" placeholder="Paste the full text of a past bid submission here…"></textarea>
       </div>
     </div>
-    <button class="add-doc-link" id="add-doc-btn">＋ Add another document</button>
-    <div class="error-msg" id="v1-error"></div>
-    <button class="btn btn-primary btn-full" id="v1-next" style="margin-top:6px;">
-      Next: Analyze my bid history →
-    </button>
+    <button class="add-doc-btn" id="ob-add-doc">＋ Add another document</button>
+
+    <div class="form-error" id="ob-error"></div>
+    <button class="btn-teal" id="ob-submit" style="width:100%; margin-top:4px;">Build my profile →</button>
   </div>
 </div>
 
-<!-- ── View 2: Manage RFP List ────────────────────────── -->
-<div id="view2">
-  <div class="inner">
-    <div class="view2-header">
-      <h1>Add RFP Opportunities</h1>
-      <p>Add Bids &amp; Tenders URLs or enter RFP details manually. You can mix both.</p>
+<!-- ════════════════════════════════════════════
+     UPLOAD BID MODAL
+════════════════════════════════════════════ -->
+<div class="modal-overlay" id="upload-modal">
+  <div class="modal-card" style="max-width:520px;">
+    <div class="modal-hdr">
+      <h2>Upload a Bid Document</h2>
+      <button class="modal-close" id="upload-close-btn">✕</button>
     </div>
-
-    <div class="url-row">
-      <input type="text" id="url-input"
-        placeholder="https://bids.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/…">
-      <button class="btn btn-primary" id="url-add-btn">Add</button>
+    <div class="form-group">
+      <label>Bid Text</label>
+      <textarea id="upload-text" class="form-ctrl" rows="10"
+        placeholder="Paste the full text of a previous bid submission…"></textarea>
     </div>
-    <div class="error-msg" id="url-error"></div>
+    <div class="form-error" id="upload-error"></div>
+    <div style="display:flex; gap:8px; margin-top:4px;">
+      <button class="btn-teal" id="upload-submit-btn">Process &amp; Save</button>
+      <button class="btn-outline-sm" id="upload-cancel-btn" style="padding:7px 14px;">Cancel</button>
+    </div>
+  </div>
+</div>
 
-    <div class="rfp-list" id="rfp-list"></div>
-
-    <button class="manual-toggle" id="manual-toggle">＋ Add RFP manually ▾</button>
-
-    <div class="manual-form" id="manual-form">
-      <div class="form-row">
-        <div class="form-group">
-          <label>RFP Title</label>
-          <input type="text" id="m-title" placeholder="e.g. IT Support Services">
+<!-- ════════════════════════════════════════════
+     EASY APPLY MODAL
+════════════════════════════════════════════ -->
+<div id="ea-modal">
+  <div class="ea-wrap">
+    <div class="ea-hdr">
+      <h2 id="ea-heading">Easy Apply</h2>
+      <button class="modal-close" id="ea-close-btn">✕</button>
+    </div>
+    <div class="ea-body">
+      <!-- Left: RFP Summary -->
+      <div class="ea-left">
+        <p class="ea-rfp-title" id="ea-title"></p>
+        <p class="ea-rfp-meta"  id="ea-meta"></p>
+        <div class="ea-circles">
+          <div class="metric-circ" id="ea-win-circle">
+            <span class="mc-val" id="ea-win-val"></span>
+            <span class="mc-lbl">Win Probability</span>
+          </div>
+          <div class="metric-circ" id="ea-cap-circle">
+            <span class="mc-val" id="ea-cap-val"></span>
+            <span class="mc-lbl">Capabilities Match</span>
+          </div>
         </div>
-        <div class="form-group">
-          <label>Agency Name</label>
-          <input type="text" id="m-agency" placeholder="e.g. City of Ottawa">
+        <div style="margin-bottom:8px;" id="ea-pills"></div>
+        <p class="ea-desc" id="ea-desc"></p>
+        <a href="#" id="ea-source-link" target="_blank" rel="noopener noreferrer"
+           style="color:#2E7D6B; font-size:13px; font-weight:bold;">View original posting ↗</a>
+      </div>
+
+      <!-- Right: Draft Generator -->
+      <div class="ea-right">
+        <p class="ea-right-title">Generate Bid Draft</p>
+
+        <div id="draft-form">
+          <div class="form-group">
+            <label>Base on previous bid:</label>
+            <select id="draft-base-sel" class="form-ctrl"></select>
+          </div>
+          <div class="form-group">
+            <label>Instructions (optional)</label>
+            <textarea id="draft-instr" class="form-ctrl" rows="3"
+              placeholder="Generate a bid submission draft for this RFP based on my previous experience."></textarea>
+          </div>
+          <div class="draft-error" id="draft-error"></div>
+          <button class="btn-teal" id="gen-draft-btn">Generate Draft →</button>
+        </div>
+
+        <div class="draft-spinner" id="draft-spinner">
+          <div class="spinner" style="width:22px;height:22px;border-width:2px;"></div>
+          <span>Writing your draft proposal…</span>
+        </div>
+
+        <div class="draft-box" id="draft-box">
+          <div class="draft-text" id="draft-text"></div>
+          <div class="draft-actions">
+            <button class="btn-teal-sm" id="copy-draft-btn">Copy to clipboard</button>
+            <button class="btn-outline-sm" id="download-draft-btn">Download .txt</button>
+            <button class="btn-outline-sm" id="regen-btn">↺ Regenerate</button>
+          </div>
         </div>
       </div>
-      <div class="form-group">
-        <label>Closing Date</label>
-        <input type="date" id="m-date">
-      </div>
-      <div class="form-group">
-        <label>Description</label>
-        <textarea rows="5" id="m-desc" placeholder="Paste or type the RFP description…"></textarea>
-      </div>
-      <button class="btn btn-secondary" id="m-add-btn" style="width:auto;">+ Add this RFP</button>
-    </div>
-
-    <div class="view2-bottom">
-      <button class="reset-link" id="reset-rfps">Reset to sample RFPs</button>
-      <button class="btn btn-primary" id="score-btn" style="width:auto;" disabled>
-        Score these opportunities →
-      </button>
     </div>
   </div>
 </div>
 
-<!-- ── View 4: Recommendation Dashboard ──────────────── -->
-<div id="view4">
-  <div class="topbar">
-    <span class="brand">BidMatch</span>
-    <div class="user-info">
-      <span class="company-label" id="dash-company"></span>
-      <div class="avatar" id="dash-avatar"></div>
+<!-- ════════════════════════════════════════════
+     MAIN PAGE
+════════════════════════════════════════════ -->
+<div id="main-page">
+
+  <!-- Header -->
+  <div class="pg-header">
+    <a href="#"><img
+      src="https://ic9.esolg.ca/235250_BidsandTenders/en/resources/logos/BT_NewLogo_NameandSymol-colored.png"
+      height="55" alt="bids&tenders"></a>
+    <div style="text-align:right;">
+      <div style="margin-bottom:6px;">
+        <a href="#" style="color:#2E7D6B; font-size:13px;">Français</a>
+      </div>
+      <img src="https://bids.bidsandtenders.ca/Resources/content/StandardTemplate/resources/Logo/bids_and_tenders_logo-long-tm.svg"
+           height="28" alt="Bids and Tenders">
     </div>
   </div>
-  <div class="dash-content">
-    <div class="stat-cards" id="stat-cards"></div>
-    <div class="cap-strip" id="cap-strip"></div>
-    <div class="profile-expanded" id="profile-expanded"></div>
-    <div class="rfp-cards" id="rfp-cards"></div>
-    <div class="dash-actions">
-      <button class="btn btn-secondary" id="update-rfp-btn">Update RFP list</button>
-      <button class="btn btn-secondary" id="start-over-btn">Start over</button>
-    </div>
+
+  <!-- Nav Bar -->
+  <div class="pg-nav">
+    <a href="#" class="active">My Bids</a>
+    <span class="sep">|</span>
+    <a href="https://bids.bidsandtenders.ca/Module/Tenders/en/Home/BidsHomepage" target="_blank" rel="noopener">Bids Homepage</a>
+    <span class="sep">|</span>
+    <a href="#">Find more bids</a>
+    <span class="sep">|</span>
+    <a href="#">Shopping Cart (0)</a>
+    <span class="sep">|</span>
+    <a href="#">Manage Account</a>
+    <span class="sep">|</span>
+    <a href="#">Subscription</a>
+    <span class="sep">|</span>
+    <a href="#">Change Password</a>
+    <span class="sep">|</span>
+    <a href="#">Logout</a>
   </div>
-</div>
+
+  <!-- Setup banner (shown if profile dismissed) -->
+  <div id="setup-banner">
+    Complete your profile to unlock AI recommendations.
+    <a href="#" id="setup-now-link" style="color:#2E7D6B; font-weight:bold; margin-left:6px;">Set up now</a>
+  </div>
+
+  <!-- Content -->
+  <div class="pg-content">
+
+    <!-- Page title -->
+    <div class="title-row">
+      <div>
+        <h1>My Bids</h1>
+        <p>This area allows Bidders to manage all bids that they are registered as a plan taker for under this account.</p>
+      </div>
+      <div style="flex-shrink:0; padding-top:4px;">
+        <button class="btn-teal" onclick="window.open('https://bids.bidsandtenders.ca/Module/Tenders/en/Home/BidsHomepage','_blank')">
+          📋 All Bids
+        </button>
+      </div>
+    </div>
+
+    <hr class="section-divider">
+
+    <!-- ── AI Recommendations ── -->
+    <div id="ai-section">
+      <div class="ai-hdr">
+        <div class="ai-hdr-left">
+          <div class="ai-hdr-title">
+            <span style="font-size:1rem;">✨</span>
+            <span class="ai-title">Recommended Opportunities</span>
+            <span class="ai-badge">Powered by AI</span>
+          </div>
+          <span class="ai-subtitle">AI-matched RFPs based on your bid history and capabilities</span>
+        </div>
+        <div class="ai-hdr-right">
+          <span class="last-updated" id="last-updated-txt"></span>
+          <button class="btn-outline-sm" id="refresh-ai-btn">↻ Refresh</button>
+        </div>
+      </div>
+      <div id="ai-body"></div>
+      <p class="ai-disclaimer">Scores are generated by AI based on your uploaded bid history and company profile. Always review the full RFP before submitting.</p>
+    </div>
+
+    <hr class="section-divider">
+
+    <!-- Invited To Bid -->
+    <h2 class="sec-h2">Invited To Bid</h2>
+    <p style="color:#333; font-size:13px; margin-bottom:16px;">There are no bids to display.</p>
+
+    <hr class="section-divider">
+
+    <!-- My Active Bids -->
+    <h2 class="sec-h2">My Active Bids</h2>
+    <p style="color:#333; font-size:13px; margin-bottom:16px;">There are no active bids to display.</p>
+
+    <hr class="section-divider">
+
+    <!-- Bid Submission History -->
+    <h2 class="sec-h2">Bid Submission History</h2>
+    <div id="bids-table-wrap"></div>
+    <button class="add-bid-link" id="add-bid-btn">+ Upload a bid document</button>
+
+  </div><!-- /pg-content -->
+</div><!-- /main-page -->
 
 <script>
-  // Replace with your Cloudflare Worker URL after deploying
-  const WORKER_URL = 'bidmatch-worker.grantmarcus245.workers.dev';
+  /* ══════════════════════════════════════════════
+     CONFIG
+  ══════════════════════════════════════════════ */
+  const WORKER_URL = 'https://bidmatch-worker.grantmarcus245.workers.dev';
+  const CORRECT_PASSWORD = 'bidmatch2025';
 
-  // ── State ────────────────────────────────────────────────
+  const FALLBACK_URLS = [
+    'https://bids.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/839b1cea-2487-4229-9031-03c1d0804121',
+    'https://bids.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/edaa30b7-5d3c-41e8-9607-93de4001584f',
+    'https://bids.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/f5e2343c-6ee6-4474-8a16-c1d3a84db8bb',
+    'https://bids.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/3e8988a8-4225-41ee-952b-92a81b67cccb',
+    'https://bids.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/02c5be9b-d1e6-40ff-a2d1-3a7f0207ff9a',
+  ];
+
+  /* ══════════════════════════════════════════════
+     SAMPLE BIDS
+  ══════════════════════════════════════════════ */
+  const SAMPLE_BIDS = [
+    {
+      id: 'bid-001',
+      title: 'Managed IT Services — Township of Clearwater',
+      agency: 'Township of Clearwater',
+      date: '2023-11-14', value: '$74,900',
+      outcome: 'won',
+      summary: 'Full Fortinet network deployment across 3 municipal facilities plus Microsoft 365 migration for 45 users.',
+      keywords: ['Fortinet', 'Microsoft 365', 'network infrastructure', 'municipal IT'],
+      docText: `Proposal for Managed IT Services submitted to the Township of Clearwater. Services included full Fortinet Next-Generation Firewall deployment across 3 municipal facilities, SD-WAN configuration, Microsoft 365 tenant migration for 45 staff including Exchange Online, Teams, and SharePoint. Provided 24/7 network monitoring with 4-hour on-site SLA response. Certifications held: Fortinet NSE 5, Microsoft 365 Certified Enterprise Administrator. Previous municipal references: Township of Ramara, Municipality of Seguin.`
+    },
+    {
+      id: 'bid-002',
+      title: 'Cybersecurity Assessment — North Bay Housing Authority',
+      agency: 'North Bay Housing Authority',
+      date: '2023-06-02', value: '$28,500',
+      outcome: 'won',
+      summary: 'Comprehensive cybersecurity audit, penetration testing, and remediation roadmap for housing authority infrastructure.',
+      keywords: ['cybersecurity', 'penetration testing', 'audit', 'remediation', 'CompTIA Security+'],
+      docText: `Proposal for Cybersecurity Assessment Services for North Bay Housing Authority. Scope included network vulnerability scanning, firewall rule review, Active Directory security audit, staff phishing simulation, and a prioritized remediation report. Certifications held: Fortinet NSE 5, CompTIA Security+, CompTIA CySA+. Timeline: 6 weeks from award.`
+    },
+    {
+      id: 'bid-003',
+      title: 'ERP Implementation Support — Municipality of French River',
+      agency: 'Municipality of French River',
+      date: '2022-09-18', value: '$112,000',
+      outcome: 'lost',
+      summary: 'Proposed implementation and training services for municipal ERP financial system modernization.',
+      keywords: ['ERP', 'financial system', 'implementation', 'training', 'municipal', 'data migration'],
+      docText: `Proposal for ERP Implementation Services for Municipality of French River. Included system configuration, data migration from legacy platform, training for 25 users, and 6-month post-go-live support. Previous ERP experience: Clearwater Township financial system, Georgian Bay Islands visitor management system.`
+    }
+  ];
+
+  /* ══════════════════════════════════════════════
+     STATE
+  ══════════════════════════════════════════════ */
   const state = {
+    authed:        false,
+    onboarded:     false,
     vendorProfile: null,
-    rfpUrls: [],
-    manualRfps: [],
-    scoredRfps: [],
+    previousBids:  [],
+    liveRfps:      [],
+    rfpsFetched:   false,
+    lastFetchTime: null,
+    activeDraft:   null,
+    activeRfp:     null,
   };
 
-  // ── API Helper ───────────────────────────────────────────
-  async function callClaude(systemPrompt, userMessage, useWebSearch = false) {
+  let obDocCount = 1;
+
+  /* ══════════════════════════════════════════════
+     SESSION PERSISTENCE
+  ══════════════════════════════════════════════ */
+  function saveSession() {
+    try {
+      sessionStorage.setItem('bm_auth',    '1');
+      if (state.vendorProfile) sessionStorage.setItem('bm_profile', JSON.stringify(state.vendorProfile));
+      if (state.previousBids.length) sessionStorage.setItem('bm_bids', JSON.stringify(state.previousBids));
+      if (state.liveRfps.length)     sessionStorage.setItem('bm_rfps', JSON.stringify(state.liveRfps));
+      sessionStorage.setItem('bm_fetched', state.rfpsFetched ? '1' : '0');
+      if (state.lastFetchTime) sessionStorage.setItem('bm_fetch_ts', state.lastFetchTime);
+    } catch (_) {}
+  }
+
+  function loadSession() {
+    try {
+      const p  = sessionStorage.getItem('bm_profile');
+      const b  = sessionStorage.getItem('bm_bids');
+      const r  = sessionStorage.getItem('bm_rfps');
+      const ts = sessionStorage.getItem('bm_fetch_ts');
+      if (p) { state.vendorProfile = JSON.parse(p); state.onboarded = true; }
+      if (b) state.previousBids = JSON.parse(b);
+      if (r) state.liveRfps     = JSON.parse(r);
+      state.rfpsFetched = sessionStorage.getItem('bm_fetched') === '1';
+      if (ts) state.lastFetchTime = ts;
+    } catch (_) {}
+  }
+
+  /* ══════════════════════════════════════════════
+     API HELPER
+  ══════════════════════════════════════════════ */
+  async function callClaude(systemPrompt, userMessage, useWebSearch = false, maxTokens = 2000) {
     const body = {
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 2000,
+      max_tokens: maxTokens,
       system: systemPrompt,
       messages: [{ role: 'user', content: userMessage }]
     };
@@ -883,16 +870,50 @@
     return text.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
   }
 
-  // ── Utilities ────────────────────────────────────────────
-  function showView(id) {
-    ['view1', 'view2', 'view4'].forEach(v => {
-      document.getElementById(v).classList.remove('active');
-    });
-    document.getElementById(id).classList.add('active');
+  function parseJsonArray(result) {
+    const jsonMatch = result.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) throw new Error('No JSON array found in response');
+    return JSON.parse(jsonMatch[0]);
   }
 
-  function showLoading(text) {
-    document.getElementById('loading-text').textContent = text;
+  function parseJsonObject(result) {
+    const m = result.match(/\{[\s\S]*\}/);
+    if (!m) throw new Error('No JSON object found in response');
+    return JSON.parse(m[0]);
+  }
+
+  /* ══════════════════════════════════════════════
+     HELPERS
+  ══════════════════════════════════════════════ */
+  function esc(s) {
+    if (s == null) return '';
+    return String(s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function trunc(s, n) { return s && s.length > n ? s.slice(0, n) + '…' : (s || ''); }
+
+  function isClosingSoon(d) {
+    if (!d) return false;
+    const diff = (new Date(d) - Date.now()) / 86400000;
+    return diff >= 0 && diff <= 7;
+  }
+
+  function scoreCls(v) {
+    if (v >= 75) return 'sc-green';
+    if (v >= 50) return 'sc-amber';
+    return 'sc-red';
+  }
+
+  function circCls(v) {
+    if (v >= 60) return 'mc-green';
+    if (v >= 40) return 'mc-amber';
+    return 'mc-red';
+  }
+
+  function showLoading(t) {
+    document.getElementById('loading-text').textContent = t;
     document.getElementById('loading').classList.add('active');
   }
 
@@ -900,310 +921,164 @@
     document.getElementById('loading').classList.remove('active');
   }
 
-  function getInitials(name) {
-    return (name || '')
-      .trim()
-      .split(/\s+/)
-      .slice(0, 2)
-      .map(w => w[0] || '')
-      .join('')
-      .toUpperCase();
+  function fmtTime(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
-  function truncate(str, n) {
-    return str.length > n ? str.slice(0, n) + '…' : str;
-  }
-
-  function isClosingSoon(dateStr) {
-    if (!dateStr) return false;
-    const d = new Date(dateStr);
-    const now = new Date();
-    const diff = (d - now) / (1000 * 60 * 60 * 24);
-    return diff >= 0 && diff <= 7;
-  }
-
-  function scoreClass(score) {
-    if (score >= 75) return 'score-green';
-    if (score >= 50) return 'score-amber';
-    if (score >= 25) return 'score-orange';
-    return 'score-red';
-  }
-
-  function readinessPill(r) {
-    if (r === 'easy')   return 'pill-easy';
-    if (r === 'medium') return 'pill-medium';
-    return 'pill-hard';
-  }
-
-  // ── Password Gate ────────────────────────────────────────
-  const CORRECT_PASSWORD = 'bidmatch2025';
-
-  if (sessionStorage.getItem('bm_auth') === '1') {
-    document.getElementById('gate').classList.add('hidden');
-    showView('view1');
-  } else {
-    showView('view1'); // visible under the gate overlay
-  }
-
+  /* ══════════════════════════════════════════════
+     PASSWORD GATE
+  ══════════════════════════════════════════════ */
   document.getElementById('gate-btn').addEventListener('click', tryPassword);
-  document.getElementById('gate-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') tryPassword();
-  });
+  document.getElementById('gate-input').addEventListener('keydown', e => { if (e.key === 'Enter') tryPassword(); });
 
   function tryPassword() {
-    const val = document.getElementById('gate-input').value;
-    if (val === CORRECT_PASSWORD) {
+    if (document.getElementById('gate-input').value === CORRECT_PASSWORD) {
+      state.authed = true;
       sessionStorage.setItem('bm_auth', '1');
       document.getElementById('gate').classList.add('hidden');
+      loadSession();
+      enterApp();
     } else {
-      const inp = document.getElementById('gate-input');
-      inp.classList.remove('shake');
-      void inp.offsetWidth; // force reflow to restart animation
-      inp.classList.add('shake');
-      document.getElementById('gate-error').textContent = 'Incorrect password';
-      inp.addEventListener('animationend', () => inp.classList.remove('shake'), { once: true });
+      document.getElementById('gate-error').textContent = 'Incorrect password.';
     }
   }
 
-  // ── View 1 ───────────────────────────────────────────────
-  let docCount = 1;
+  /* ══════════════════════════════════════════════
+     ENTER APP
+  ══════════════════════════════════════════════ */
+  function enterApp() {
+    document.getElementById('main-page').classList.add('active');
+    renderBidsTable();
 
-  document.getElementById('add-doc-btn').addEventListener('click', () => {
-    if (docCount >= 3) return;
-    docCount++;
-    const container = document.getElementById('bid-docs');
-    const div = document.createElement('div');
-    div.className = 'form-group';
-    div.innerHTML = `
-      <label>Bid Document ${docCount}</label>
-      <textarea rows="8" placeholder="Paste the full text of a past bid submission here…"></textarea>
-    `;
-    container.appendChild(div);
-    if (docCount >= 3) document.getElementById('add-doc-btn').style.display = 'none';
+    if (state.onboarded && state.vendorProfile) {
+      // Already have profile — show AI section, trigger fetch if needed
+      if (!state.rfpsFetched) {
+        renderAiSkeletons();
+        fetchAndScoreRfps();
+      } else {
+        renderAiTable();
+      }
+    } else {
+      // Show onboarding modal
+      document.getElementById('onboard-modal').classList.add('active');
+      renderAiSetupPrompt();
+    }
+  }
+
+  /* ══════════════════════════════════════════════
+     ONBOARDING MODAL
+  ══════════════════════════════════════════════ */
+  document.getElementById('ob-add-doc').addEventListener('click', () => {
+    if (obDocCount >= 3) return;
+    obDocCount++;
+    const c = document.getElementById('ob-docs');
+    const d = document.createElement('div');
+    d.className = 'form-group';
+    d.innerHTML = `<label>Bid Document ${obDocCount}</label>
+      <textarea class="form-ctrl" rows="5" placeholder="Paste the full text of a past bid submission here…"></textarea>`;
+    c.appendChild(d);
+    if (obDocCount >= 3) document.getElementById('ob-add-doc').style.display = 'none';
   });
 
-  document.getElementById('v1-next').addEventListener('click', async () => {
-    const companyName = document.getElementById('company-name').value.trim();
-    const textareas   = document.querySelectorAll('#bid-docs textarea');
-    const bidTexts    = Array.from(textareas).map(t => t.value.trim()).filter(Boolean);
-    const errEl       = document.getElementById('v1-error');
+  document.getElementById('onboard-dismiss-btn').addEventListener('click', () => {
+    document.getElementById('onboard-modal').classList.remove('active');
+    document.getElementById('setup-banner').classList.add('show');
+  });
 
-    if (!companyName) {
-      errEl.textContent = 'Please enter your company name.';
-      return;
-    }
-    if (bidTexts.length === 0) {
-      errEl.textContent = 'Please paste at least one bid document.';
-      return;
-    }
+  document.getElementById('setup-now-link').addEventListener('click', e => {
+    e.preventDefault();
+    document.getElementById('setup-banner').classList.remove('show');
+    document.getElementById('onboard-modal').classList.add('active');
+  });
+
+  document.getElementById('ob-submit').addEventListener('click', async () => {
+    const company  = document.getElementById('ob-company').value.trim();
+    const industry = document.getElementById('ob-industry').value.trim();
+    const desc     = document.getElementById('ob-desc').value.trim();
+    const tas      = document.querySelectorAll('#ob-docs textarea');
+    const bidTexts = Array.from(tas).map(t => t.value.trim()).filter(Boolean);
+    const errEl    = document.getElementById('ob-error');
+
+    if (!company) { errEl.textContent = 'Company name is required.'; return; }
     errEl.textContent = '';
 
-    showLoading('Analyzing your bid history…');
+    showLoading('Building your profile…');
     try {
       const raw = await callClaude(
-        `You are analyzing a vendor's past bid submissions. Extract their capability profile.
+        `Extract a vendor capability profile from the provided company information and any bid documents.
 Return ONLY valid JSON, no markdown, no explanation.
-Schema: { "companyName": string, "capabilities": string[], "categories": string[], "avgProjectSize": string, "geography": string[], "certs": string[], "summary": string }`,
-        `Company: ${companyName}\n\n${bidTexts.join('\n\n---\n\n')}`,
+Schema: { "companyName": string, "industry": string, "description": string, "capabilities": string[], "categories": string[], "avgProjectSize": string, "geography": string[], "certs": string[], "summary": string, "strengthKeywords": string[] }`,
+        `Company: ${company}
+Industry: ${industry || 'Not specified'}
+Description: ${desc || 'Not provided'}
+${bidTexts.length ? 'Bid Documents:\n' + bidTexts.join('\n---\n') : 'No bid documents — infer from company info only.'}`,
         false
       );
-      state.vendorProfile = JSON.parse(raw);
-      state.vendorProfile.companyName = state.vendorProfile.companyName || companyName;
+
+      state.vendorProfile = parseJsonObject(raw);
+      state.vendorProfile.companyName = state.vendorProfile.companyName || company;
+
+      // Merge sample bids + uploaded
+      state.previousBids = [...SAMPLE_BIDS];
+      bidTexts.forEach((txt, i) => {
+        state.previousBids.push({
+          id: `bid-up-${i+1}`,
+          title: `Uploaded Bid ${i+1}`,
+          agency: '', date: new Date().toISOString().slice(0,10),
+          value: '', outcome: 'submitted',
+          summary: 'Uploaded bid document.',
+          keywords: (state.vendorProfile.strengthKeywords || []).slice(0, 4),
+          docText: txt,
+        });
+      });
+
+      state.onboarded = true;
+      saveSession();
       hideLoading();
-      showProfileModal();
+      document.getElementById('onboard-modal').classList.remove('active');
+      document.getElementById('setup-banner').classList.remove('show');
+
+      renderBidsTable();
+      renderAiSkeletons();
+      fetchAndScoreRfps();
     } catch (err) {
       hideLoading();
       errEl.textContent = 'Error: ' + err.message;
     }
   });
 
-  // ── Profile Modal ─────────────────────────────────────────
-  function showProfileModal() {
-    const p = state.vendorProfile;
-    document.getElementById('modal-company').textContent = p.companyName;
-    document.getElementById('modal-summary').textContent = p.summary || '';
-    renderTagGroup('modal-capabilities', p.capabilities || [], 'tag-blue');
-    renderTagGroup('modal-geography',    p.geography    || [], 'tag-gray');
-    renderTagGroup('modal-certs',        p.certs        || [], 'tag-green');
-    document.getElementById('profileModal').classList.add('active');
-  }
-
-  function renderTagGroup(containerId, items, cls) {
-    const container = document.getElementById(containerId);
-    container.innerHTML = '';
-
-    items.forEach(item => {
-      const tag = document.createElement('span');
-      tag.className = `tag ${cls}`;
-      tag.innerHTML = `${escHtml(item)} <span class="tag-remove">✕</span>`;
-      tag.addEventListener('click', () => {
-        const idx = items.indexOf(item);
-        if (idx > -1) items.splice(idx, 1);
-        tag.remove();
-      });
-      container.appendChild(tag);
-    });
-
-    // Inline add-input
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.className = 'tag-add-input';
-    input.placeholder = '+ add';
-    input.addEventListener('keydown', e => {
-      if (e.key === 'Enter' && input.value.trim()) {
-        const newItem = input.value.trim();
-        items.push(newItem);
-        input.value = '';
-        const newTag = document.createElement('span');
-        newTag.className = `tag ${cls}`;
-        newTag.innerHTML = `${escHtml(newItem)} <span class="tag-remove">✕</span>`;
-        newTag.addEventListener('click', () => {
-          const idx = items.indexOf(newItem);
-          if (idx > -1) items.splice(idx, 1);
-          newTag.remove();
-        });
-        container.insertBefore(newTag, input);
-      }
-    });
-    container.appendChild(input);
-  }
-
-  document.getElementById('modal-confirm').addEventListener('click', () => {
-    document.getElementById('profileModal').classList.remove('active');
-    renderRfpList();
-    showView('view2');
-  });
-
-  // ── View 2 ───────────────────────────────────────────────
-  const SAMPLE_URLS = [
-    'https://bids.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/839b1cea-2487-4229-9031-03c1d0804121',
-    'https://bids.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/edaa30b7-5d3c-41e8-9607-93de4001584f',
-    'https://bids.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/f5e2343c-6ee6-4474-8a16-c1d3a84db8bb',
-    'https://bids.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/3e8988a8-4225-41ee-952b-92a81b67cccb',
-    'https://bids.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/02c5be9b-d1e6-40ff-a2d1-3a7f0207ff9a',
-  ];
-
-  function renderRfpList() {
-    const list = document.getElementById('rfp-list');
-    list.innerHTML = '';
-
-    const urlItems    = state.rfpUrls.map((u, i) => ({ type: 'url',    value: u, idx: i }));
-    const manualItems = state.manualRfps.map((r, i) => ({ type: 'manual', value: r, idx: i }));
-    const allItems    = [...urlItems, ...manualItems];
-
-    if (allItems.length === 0) {
-      updateScoreBtn();
-      return;
-    }
-
-    allItems.forEach(item => {
-      const div = document.createElement('div');
-      div.className = 'rfp-list-item';
-
-      const label = item.type === 'url'
-        ? truncate(item.value, 60)
-        : escHtml(`${item.value.title || 'Untitled'} — ${item.value.agency || 'Unknown agency'}`);
-
-      const tagCls  = item.type === 'url' ? 'tag-gray' : 'tag-amber';
-      const tagText = item.type === 'url' ? 'URL' : 'Manual';
-
-      div.innerHTML = `
-        <span class="item-label">${label}</span>
-        <span class="item-tag ${tagCls}">${tagText}</span>
-        <button class="trash-btn" aria-label="Remove">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="3 6 5 6 21 6"/>
-            <path d="M19 6l-1 14H6L5 6"/>
-            <path d="M10 11v6M14 11v6"/>
-            <path d="M9 6V4h6v2"/>
-          </svg>
-        </button>
-      `;
-
-      div.querySelector('.trash-btn').addEventListener('click', () => {
-        if (item.type === 'url') {
-          state.rfpUrls.splice(item.idx, 1);
-        } else {
-          state.manualRfps.splice(item.idx, 1);
-        }
-        renderRfpList();
-      });
-
-      list.appendChild(div);
-    });
-
-    updateScoreBtn();
-  }
-
-  function updateScoreBtn() {
-    const total = state.rfpUrls.length + state.manualRfps.length;
-    document.getElementById('score-btn').disabled = total === 0;
-  }
-
-  // URL add
-  document.getElementById('url-add-btn').addEventListener('click', addUrl);
-  document.getElementById('url-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') addUrl();
-  });
-
-  function addUrl() {
-    const val   = document.getElementById('url-input').value.trim();
-    const errEl = document.getElementById('url-error');
-    if (!val) { errEl.textContent = ''; return; }
-    if (!val.includes('bidsandtenders.ca')) {
-      errEl.textContent = 'URL must be from bidsandtenders.ca';
-      return;
-    }
-    errEl.textContent = '';
-    state.rfpUrls.push(val);
-    document.getElementById('url-input').value = '';
-    renderRfpList();
-  }
-
-  // Manual form toggle
-  document.getElementById('manual-toggle').addEventListener('click', () => {
-    const form = document.getElementById('manual-form');
-    const btn  = document.getElementById('manual-toggle');
-    form.classList.toggle('open');
-    btn.textContent = form.classList.contains('open')
-      ? '▴ Add RFP manually (hide)'
-      : '＋ Add RFP manually ▾';
-  });
-
-  document.getElementById('m-add-btn').addEventListener('click', () => {
-    const title  = document.getElementById('m-title').value.trim();
-    const agency = document.getElementById('m-agency').value.trim();
-    const date   = document.getElementById('m-date').value;
-    const desc   = document.getElementById('m-desc').value.trim();
-    if (!title) return;
-    state.manualRfps.push({ title, agency, closingDate: date, description: desc });
-    document.getElementById('m-title').value = '';
-    document.getElementById('m-agency').value = '';
-    document.getElementById('m-date').value = '';
-    document.getElementById('m-desc').value = '';
-    renderRfpList();
-  });
-
-  document.getElementById('reset-rfps').addEventListener('click', () => {
-    state.rfpUrls   = [...SAMPLE_URLS];
-    state.manualRfps = [];
-    renderRfpList();
-  });
-
-  document.getElementById('score-btn').addEventListener('click', async () => {
-    showLoading('Fetching and scoring RFPs… this takes 20–30 seconds.');
+  /* ══════════════════════════════════════════════
+     RFP FETCH + SCORE (TWO-STEP)
+  ══════════════════════════════════════════════ */
+  async function fetchAndScoreRfps() {
     try {
+      // Step 1 — discover live listing URLs
+      let urls = [];
+      try {
+        const urlRaw = await callClaude(
+          `Search for currently open RFP opportunities on the Bids and Tenders website (bids.bidsandtenders.ca).
+Find the detail page URLs for at least 8 currently open bid opportunities.
+Return ONLY a valid JSON array of URL strings, no markdown, no explanation.`,
+          `Find currently open RFP listings on https://bids.bidsandtenders.ca/Module/Tenders/en/Home/BidsHomepage
+Return an array of 8-10 detail page URLs for open bids.`,
+          true
+        );
+        urls = parseJsonArray(urlRaw);
+      } catch (_) {}
+
+      if (!Array.isArray(urls) || urls.length === 0) urls = FALLBACK_URLS;
+
+      // Step 2 — fetch + score
       const raw = await callClaude(
-        `You are a procurement intelligence assistant helping vendors find the best RFP opportunities.
+        `YOU MUST RESPOND WITH ONLY A JSON ARRAY. NO TEXT BEFORE OR AFTER. NO EXPLANATION. NO PREAMBLE.
 
-For each URL provided: use web search to fetch the page and extract the RFP fields.
-For each manually-entered RFP: use the provided text directly.
+For each URL: fetch the full page content and extract all RFP details.
+Score each RFP against the vendor profile.
 
-Score each RFP against the vendor profile. Consider: capability match, category alignment,
-certifications required vs held, project size fit, and geographic relevance.
-
-Return ONLY a valid JSON array, no markdown, no explanation.
-Each element: {
+Return a JSON array sorted by winProbability descending. Each element:
+{
   "id": string,
   "title": string,
   "agency": string,
@@ -1212,185 +1087,448 @@ Each element: {
   "closingDate": string,
   "description": string,
   "categories": string[],
-  "sourceUrl": string or null,
-  "score": number 0-100,
-  "fitSummary": string (2 sentences max),
-  "gaps": string[] (0-2 short phrases),
-  "readiness": "easy" | "medium" | "hard",
-  "confidence": "high" | "medium" | "low"
+  "sourceUrl": string,
+  "estimatedValue": string or null,
+  "capabilityMatch": number 0-100,
+  "winProbability": number 0-100,
+  "fitSummary": string (2 sentences),
+  "gaps": string[],
+  "readiness": "easy"|"medium"|"hard",
+  "confidence": "high"|"medium"|"low",
+  "whyApply": string (1 sentence — the strongest reason to bid on this)
 }
-Set confidence to "low" if the RFP page had minimal description text.
-Sort by score descending.`,
+Set confidence to "low" if the page had minimal description text.`,
         `Vendor Profile:
 ${JSON.stringify(state.vendorProfile, null, 2)}
 
-RFP URLs to fetch and score:
-${state.rfpUrls.join('\n')}
+Previous Bid Keywords:
+${state.previousBids.map(b => b.keywords.join(', ')).join(' | ')}
 
-Manually entered RFPs:
-${JSON.stringify(state.manualRfps)}`,
-        true
+RFP URLs:
+${urls.join('\n')}`,
+        true,
+        4000
       );
-      state.scoredRfps = JSON.parse(raw);
+
+      const jsonMatch = raw.match(/\[[\s\S]*\]/);
+      if (!jsonMatch) throw new Error('No JSON array found in response');
+      state.liveRfps = JSON.parse(jsonMatch[0]);
+      state.rfpsFetched  = true;
+      state.lastFetchTime = new Date().toISOString();
+      saveSession();
+    } catch (_) {
+      state.rfpsFetched  = true;
+      state.liveRfps    = [];
+      state.lastFetchTime = new Date().toISOString();
+    }
+    renderAiTable();
+  }
+
+  /* ══════════════════════════════════════════════
+     AI SECTION — SETUP PROMPT (not onboarded)
+  ══════════════════════════════════════════════ */
+  function renderAiSetupPrompt() {
+    document.getElementById('ai-body').innerHTML = `
+      <div class="ai-empty">
+        <p style="margin-bottom:10px;">Complete your company profile to get AI-matched RFP recommendations.</p>
+        <button class="btn-teal-sm" onclick="
+          document.getElementById('setup-banner').classList.remove('show');
+          document.getElementById('onboard-modal').classList.add('active');
+        ">Set up profile →</button>
+      </div>`;
+    document.getElementById('last-updated-txt').textContent = '';
+  }
+
+  /* ══════════════════════════════════════════════
+     AI SECTION — SKELETON LOADERS
+  ══════════════════════════════════════════════ */
+  function renderAiSkeletons() {
+    const skRow = () => `
+      <tr class="skel-row">
+        <td><div class="skeleton" style="height:13px;width:200px;margin-bottom:5px;"></div>
+            <div class="skeleton" style="height:10px;width:140px;"></div></td>
+        <td><div class="skeleton" style="height:22px;width:44px;"></div></td>
+        <td><div class="skeleton" style="height:12px;width:180px;"></div></td>
+        <td><div class="skeleton" style="height:12px;width:80px;"></div></td>
+        <td><div class="skeleton" style="height:24px;width:90px;"></div></td>
+      </tr>`;
+    document.getElementById('ai-body').innerHTML = `
+      <table class="ai-table">
+        <thead>
+          <tr>
+            <th>Opportunity</th><th>Match Score</th>
+            <th>Win Signal</th><th>Closing</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>${skRow()}${skRow()}${skRow()}</tbody>
+      </table>`;
+    document.getElementById('last-updated-txt').textContent = '';
+  }
+
+  /* ══════════════════════════════════════════════
+     AI SECTION — RESULTS TABLE
+  ══════════════════════════════════════════════ */
+  function renderAiTable() {
+    if (state.lastFetchTime) {
+      document.getElementById('last-updated-txt').textContent = 'Last updated: ' + fmtTime(state.lastFetchTime);
+    }
+
+    if (!state.liveRfps || state.liveRfps.length === 0) {
+      document.getElementById('ai-body').innerHTML = `
+        <div class="ai-empty">
+          <p style="margin-bottom:10px;">Could not load live opportunities. Check your connection or try refreshing.</p>
+          <button class="btn-teal-sm" id="retry-ai-btn">Try again</button>
+        </div>`;
+      document.getElementById('retry-ai-btn').addEventListener('click', () => {
+        state.rfpsFetched = false; state.liveRfps = [];
+        renderAiSkeletons();
+        fetchAndScoreRfps();
+      });
+      return;
+    }
+
+    const top5 = state.liveRfps.slice(0, 5);
+    const rows = top5.map(rfp => {
+      const sc     = rfp.winProbability != null ? rfp.winProbability : (rfp.capabilityMatch || 0);
+      const cls    = scoreCls(sc);
+      const signal = esc(trunc(rfp.whyApply || rfp.fitSummary || '—', 80));
+      const urgent = isClosingSoon(rfp.closingDate);
+      const dtCls  = urgent ? 'close-date urgent' : 'close-date';
+      const dtTxt  = rfp.closingDate ? (urgent ? '⚠ ' : '') + esc(rfp.closingDate) : '—';
+
+      return `
+        <tr>
+          <td>
+            <button class="opp-name-link" data-id="${esc(rfp.id)}">${esc(rfp.title || 'Untitled')}</button>
+            <div class="opp-agency">${esc(rfp.agency || '')}</div>
+            <div class="opp-bidnum">${esc(rfp.bidNumber || '')}</div>
+          </td>
+          <td style="text-align:center; white-space:nowrap;">
+            <span class="score-large ${cls}">${sc}%</span>
+            <span class="score-lbl">match</span>
+          </td>
+          <td><span class="win-signal">${signal}</span></td>
+          <td><span class="${dtCls}">${dtTxt}</span></td>
+          <td style="white-space:nowrap;">
+            <button class="btn-teal-sm easy-apply-btn" data-id="${esc(rfp.id)}" style="margin-bottom:4px;">Easy Apply</button>
+            ${rfp.sourceUrl ? `<br><a href="${encodeURI(rfp.sourceUrl)}" target="_blank" rel="noopener" style="font-size:12px;color:#2E7D6B;">View ↗</a>` : ''}
+          </td>
+        </tr>`;
+    }).join('');
+
+    document.getElementById('ai-body').innerHTML = `
+      <table class="ai-table">
+        <thead>
+          <tr>
+            <th>Opportunity</th><th>Match Score</th>
+            <th>Win Signal</th><th>Closing</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+
+    // Wire buttons
+    document.querySelectorAll('.easy-apply-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const rfp = state.liveRfps.find(r => r.id === btn.dataset.id);
+        if (rfp) openEasyApply(rfp);
+      });
+    });
+    document.querySelectorAll('.opp-name-link').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const rfp = state.liveRfps.find(r => r.id === btn.dataset.id);
+        if (rfp) openEasyApply(rfp);
+      });
+    });
+  }
+
+  /* ══════════════════════════════════════════════
+     REFRESH BUTTON
+  ══════════════════════════════════════════════ */
+  document.getElementById('refresh-ai-btn').addEventListener('click', () => {
+    if (!state.onboarded) {
+      document.getElementById('onboard-modal').classList.add('active');
+      return;
+    }
+    state.rfpsFetched = false; state.liveRfps = [];
+    saveSession();
+    renderAiSkeletons();
+    fetchAndScoreRfps();
+  });
+
+  /* ══════════════════════════════════════════════
+     BID SUBMISSION HISTORY TABLE
+  ══════════════════════════════════════════════ */
+  function renderBidsTable() {
+    const wrap = document.getElementById('bids-table-wrap');
+    if (!state.previousBids.length) {
+      wrap.innerHTML = '<p style="color:#555;font-size:13px;">No bid submissions on file.</p>';
+      return;
+    }
+
+    const opMap = { won: 'op-won', lost: 'op-lost', submitted: 'op-submitted', pending: 'op-pending' };
+    const opLbl = { won: 'Won', lost: 'Lost', submitted: 'Submitted', pending: 'Pending' };
+
+    const headerRow = `
+      <tr>
+        <th>Bid Name</th><th>Agency</th>
+        <th>Date Submitted</th><th>Value</th>
+        <th>Outcome</th><th>Actions</th>
+      </tr>`;
+
+    const bodyRows = state.previousBids.map(bid => {
+      const oc  = opMap[bid.outcome] || 'op-submitted';
+      const ol  = opLbl[bid.outcome] || 'Submitted';
+      const kws = (bid.keywords || []).map(k => `<span class="kw">${esc(k)}</span>`).join(' ');
+
+      return `
+        <tr>
+          <td>
+            <button class="bid-link" data-id="${esc(bid.id)}">${esc(bid.title)}</button>
+          </td>
+          <td>${esc(bid.agency || '—')}</td>
+          <td>${esc(bid.date   || '—')}</td>
+          <td>${esc(bid.value  || '—')}</td>
+          <td><span class="opill ${oc}">${ol}</span></td>
+          <td>
+            <button class="btn-outline-sm use-tmpl-btn" data-id="${esc(bid.id)}">Use as template</button>
+          </td>
+        </tr>
+        <tr class="detail-row" id="detail-${esc(bid.id)}">
+          <td class="detail-cell" colspan="6">
+            <p class="detail-summary">${esc(bid.summary || bid.docText || '')}</p>
+            <div class="kw-wrap">${kws}</div>
+          </td>
+        </tr>`;
+    }).join('');
+
+    wrap.innerHTML = `<table class="data-table"><thead>${headerRow}</thead><tbody>${bodyRows}</tbody></table>`;
+
+    // Toggle detail rows
+    wrap.querySelectorAll('.bid-link').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const row = document.getElementById('detail-' + btn.dataset.id);
+        if (row) row.classList.toggle('open');
+      });
+    });
+
+    // Use as template
+    wrap.querySelectorAll('.use-tmpl-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (state.liveRfps.length > 0) {
+          openEasyApply(state.liveRfps[0], btn.dataset.id);
+        } else {
+          alert('Score some opportunities first, then use this bid as a template.');
+        }
+      });
+    });
+  }
+
+  /* ══════════════════════════════════════════════
+     UPLOAD BID MODAL
+  ══════════════════════════════════════════════ */
+  document.getElementById('add-bid-btn').addEventListener('click', () => {
+    document.getElementById('upload-text').value  = '';
+    document.getElementById('upload-error').textContent = '';
+    document.getElementById('upload-modal').classList.add('active');
+  });
+  document.getElementById('upload-close-btn').addEventListener('click', () => {
+    document.getElementById('upload-modal').classList.remove('active');
+  });
+  document.getElementById('upload-cancel-btn').addEventListener('click', () => {
+    document.getElementById('upload-modal').classList.remove('active');
+  });
+
+  document.getElementById('upload-submit-btn').addEventListener('click', async () => {
+    const txt   = document.getElementById('upload-text').value.trim();
+    const errEl = document.getElementById('upload-error');
+    if (!txt) { errEl.textContent = 'Please paste a bid document.'; return; }
+    errEl.textContent = '';
+
+    showLoading('Processing bid document…');
+    try {
+      const raw = await callClaude(
+        `Extract metadata from this bid document. Return ONLY valid JSON.
+Schema: { "title": string, "agency": string, "date": string (YYYY-MM-DD or empty), "value": string, "outcome": "submitted", "summary": string, "keywords": string[] }`,
+        txt, false
+      );
+      const meta = parseJsonObject(raw);
+      state.previousBids.push({
+        id: 'bid-up-' + Date.now(),
+        title:    meta.title    || 'Uploaded Bid',
+        agency:   meta.agency   || '',
+        date:     meta.date     || new Date().toISOString().slice(0,10),
+        value:    meta.value    || '',
+        outcome:  'submitted',
+        summary:  meta.summary  || '',
+        keywords: meta.keywords || [],
+        docText:  txt,
+      });
+      saveSession();
       hideLoading();
-      renderDashboard();
-      showView('view4');
+      document.getElementById('upload-modal').classList.remove('active');
+      renderBidsTable();
     } catch (err) {
       hideLoading();
-      alert('Error scoring RFPs: ' + err.message);
+      errEl.textContent = 'Error: ' + err.message;
     }
   });
 
-  // ── View 4: Dashboard ─────────────────────────────────────
-  function renderDashboard() {
-    const p    = state.vendorProfile;
-    const rfps = state.scoredRfps;
+  /* ══════════════════════════════════════════════
+     EASY APPLY MODAL
+  ══════════════════════════════════════════════ */
+  function openEasyApply(rfp, preSelectBidId) {
+    state.activeRfp   = rfp;
+    state.activeDraft = null;
 
-    // Top bar
-    document.getElementById('dash-company').textContent = p.companyName;
-    document.getElementById('dash-avatar').textContent  = getInitials(p.companyName);
+    document.getElementById('ea-heading').textContent = trunc(rfp.title || 'RFP', 50);
+    document.getElementById('ea-title').textContent   = rfp.title || 'Untitled RFP';
+    document.getElementById('ea-meta').textContent    = [rfp.agency, rfp.bidNumber, rfp.closingDate].filter(Boolean).join(' · ');
+    document.getElementById('ea-desc').textContent    = rfp.description || 'No description available.';
 
-    // Stat cards
-    const avgScore     = rfps.length
-      ? Math.round(rfps.reduce((s, r) => s + r.score, 0) / rfps.length)
-      : 0;
-    const strongCount  = rfps.filter(r => r.score >= 75).length;
+    // Metric circles
+    const wv = rfp.winProbability  != null ? rfp.winProbability  + '%' : '—';
+    const cv = rfp.capabilityMatch != null ? rfp.capabilityMatch + '%' : '—';
+    const wc = document.getElementById('ea-win-circle');
+    const cc = document.getElementById('ea-cap-circle');
+    wc.className = 'metric-circ ' + circCls(rfp.winProbability  || 0);
+    cc.className = 'metric-circ ' + circCls(rfp.capabilityMatch || 0);
+    document.getElementById('ea-win-val').textContent = wv;
+    document.getElementById('ea-cap-val').textContent = cv;
 
-    document.getElementById('stat-cards').innerHTML = `
-      <div class="stat-card">
-        <div class="stat-val">${avgScore}</div>
-        <div class="stat-lbl">Average match score</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-val">${strongCount}</div>
-        <div class="stat-lbl">Strong matches (≥&nbsp;75)</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-val">${rfps.length}</div>
-        <div class="stat-lbl">RFPs analyzed</div>
-      </div>
-    `;
+    // Pills
+    const pills = [];
+    if (rfp.classification) pills.push(`<span style="background:#eeeeee;padding:2px 8px;font-size:11px;border-radius:2px;">${esc(rfp.classification)}</span>`);
+    if (rfp.readiness) {
+      const rc = rfp.readiness === 'easy' ? '#d6ede8' : rfp.readiness === 'medium' ? '#fff8e1' : '#fde8e6';
+      const rt = rfp.readiness === 'easy' ? '#1B5E50' : rfp.readiness === 'medium' ? '#E6950A' : '#C0392B';
+      pills.push(`<span style="background:${rc};color:${rt};padding:2px 8px;font-size:11px;border-radius:2px;font-weight:bold;">${esc(rfp.readiness)}</span>`);
+    }
+    document.getElementById('ea-pills').innerHTML = `<div style="display:flex;gap:6px;flex-wrap:wrap;">${pills.join('')}</div>`;
 
-    // Capability strip (top 5, expandable)
-    const allCaps  = p.capabilities || [];
-    const topCaps  = allCaps.slice(0, 5);
-    const strip    = document.getElementById('cap-strip');
-    const expanded = document.getElementById('profile-expanded');
+    // Source link
+    const srcLink = document.getElementById('ea-source-link');
+    if (rfp.sourceUrl) {
+      srcLink.href  = rfp.sourceUrl;
+      srcLink.style.display = '';
+    } else {
+      srcLink.style.display = 'none';
+    }
 
-    strip.innerHTML =
-      `<span class="cap-label">Capabilities</span>` +
-      topCaps.map(c => `<span class="tag tag-navy">${escHtml(c)}</span>`).join('') +
-      (allCaps.length > 5
-        ? `<span class="cap-more">+${allCaps.length - 5} more</span>`
-        : '');
+    // Populate bid dropdown
+    const sel = document.getElementById('draft-base-sel');
+    sel.innerHTML = `<option value="">Start fresh</option>` +
+      state.previousBids.map(b => `<option value="${esc(b.id)}">${esc(b.title)}</option>`).join('');
+    if (preSelectBidId) sel.value = preSelectBidId;
 
-    expanded.classList.remove('open');
+    // Reset draft area
+    document.getElementById('draft-form').style.display = 'block';
+    document.getElementById('draft-box').classList.remove('active');
+    document.getElementById('draft-spinner').classList.remove('active');
+    document.getElementById('draft-error').textContent = '';
+    document.getElementById('draft-instr').value =
+      'Generate a bid submission draft for this RFP based on my previous experience.';
 
-    strip.addEventListener('click', () => {
-      expanded.classList.toggle('open');
-      if (expanded.classList.contains('open')) {
-        expanded.innerHTML = `
-          <div style="margin-bottom:10px;">
-            <strong>All Capabilities:</strong>&nbsp;
-            ${allCaps.map(c => `<span class="tag tag-navy" style="margin:2px;">${escHtml(c)}</span>`).join('')}
-          </div>
-          <div style="margin-bottom:10px;">
-            <strong>Categories:</strong>&nbsp;
-            ${(p.categories||[]).map(c => `<span class="tag tag-blue" style="margin:2px;">${escHtml(c)}</span>`).join('')}
-          </div>
-          <div style="margin-bottom:10px;">
-            <strong>Geography:</strong>&nbsp;
-            ${(p.geography||[]).map(c => `<span class="tag tag-gray" style="margin:2px;">${escHtml(c)}</span>`).join('')}
-          </div>
-          <div>
-            <strong>Certifications:</strong>&nbsp;
-            ${(p.certs||[]).length
-              ? (p.certs||[]).map(c => `<span class="tag tag-green" style="margin:2px;">${escHtml(c)}</span>`).join('')
-              : '<span style="color:#9CA3AF;font-size:0.85rem;">None listed</span>'}
-          </div>
-        `;
+    document.getElementById('ea-modal').classList.add('active');
+  }
+
+  document.getElementById('ea-close-btn').addEventListener('click', () => {
+    document.getElementById('ea-modal').classList.remove('active');
+  });
+
+  document.getElementById('gen-draft-btn').addEventListener('click', async () => {
+    const rfp         = state.activeRfp;
+    const selId       = document.getElementById('draft-base-sel').value;
+    const instr       = document.getElementById('draft-instr').value.trim();
+    const baseBid     = state.previousBids.find(b => b.id === selId) || null;
+    const errEl       = document.getElementById('draft-error');
+
+    errEl.textContent = '';
+    document.getElementById('draft-form').style.display = 'none';
+    document.getElementById('draft-spinner').classList.add('active');
+    document.getElementById('draft-box').classList.remove('active');
+
+    try {
+      const raw = await callClaude(
+        `You are an expert bid writer helping a vendor prepare a proposal.
+Generate a professional, detailed bid submission draft based on:
+1. The vendor's profile and capabilities
+2. The selected previous bid (if any) as a style/content reference
+3. The specific requirements of the target RFP
+
+Structure the draft with these sections:
+- Executive Summary
+- Understanding of Requirements
+- Proposed Approach
+- Relevant Experience
+- Team Qualifications
+- Pricing Notes (placeholder)
+- Why Choose Us
+
+Write in a professional tone appropriate for municipal government procurement.
+Be specific — reference actual capabilities, certifications, and experience from the vendor profile.`,
+        `Vendor Profile:
+${JSON.stringify(state.vendorProfile, null, 2)}
+
+${baseBid ? `Reference Bid (use as style template):\n${baseBid.docText}\n\n` : ''}Target RFP:
+Title: ${rfp.title}
+Agency: ${rfp.agency}
+Description: ${rfp.description}
+Categories: ${(rfp.categories||[]).join(', ')}
+
+Additional instructions: ${instr}`,
+        false, 4000
+      );
+
+      state.activeDraft = raw;
+      document.getElementById('draft-text').textContent = raw;
+      document.getElementById('draft-spinner').classList.remove('active');
+      document.getElementById('draft-box').classList.add('active');
+    } catch (err) {
+      document.getElementById('draft-spinner').classList.remove('active');
+      document.getElementById('draft-form').style.display = 'block';
+      errEl.textContent = 'Error generating draft: ' + err.message;
+    }
+  });
+
+  document.getElementById('regen-btn').addEventListener('click', () => {
+    document.getElementById('draft-box').classList.remove('active');
+    document.getElementById('draft-form').style.display = 'block';
+  });
+
+  document.getElementById('copy-draft-btn').addEventListener('click', () => {
+    if (!state.activeDraft) return;
+    navigator.clipboard.writeText(state.activeDraft).then(() => {
+      const b = document.getElementById('copy-draft-btn');
+      b.textContent = 'Copied!';
+      setTimeout(() => { b.textContent = 'Copy to clipboard'; }, 2000);
+    }).catch(() => alert('Copy failed — please select and copy manually.'));
+  });
+
+  document.getElementById('download-draft-btn').addEventListener('click', () => {
+    if (!state.activeDraft || !state.activeRfp) return;
+    const blob = new Blob([state.activeDraft], { type: 'text/plain' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `bid-draft-${(state.activeRfp.title||'rfp').toLowerCase().replace(/\s+/g,'-').slice(0,40)}.txt`;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+  });
+
+  /* ══════════════════════════════════════════════
+     INIT
+  ══════════════════════════════════════════════ */
+  (function init() {
+    if (sessionStorage.getItem('bm_auth') === '1') {
+      loadSession();
+      if (state.onboarded && state.vendorProfile) {
+        document.getElementById('gate').classList.add('hidden');
+        state.authed = true;
+        enterApp();
       }
-    });
-
-    // RFP cards
-    const cardsEl = document.getElementById('rfp-cards');
-    cardsEl.innerHTML = '';
-
-    rfps.forEach((rfp, idx) => {
-      const isBest    = idx === 0 && rfps.length > 0;
-      const urgent    = isClosingSoon(rfp.closingDate);
-      const dateText  = rfp.closingDate
-        ? `${urgent ? '⚠ ' : ''}${rfp.closingDate}`
-        : 'Closing TBD';
-      const gaps      = Array.isArray(rfp.gaps) ? rfp.gaps : [];
-
-      const card = document.createElement('div');
-      card.className = `rfp-card${isBest ? ' best-match' : ''}`;
-      card.innerHTML = `
-        <div class="rfp-body">
-          <div class="rfp-title-row">
-            <span class="rfp-title">${escHtml(rfp.title || 'Untitled RFP')}</span>
-            ${isBest ? '<span class="best-badge">Best match</span>' : ''}
-          </div>
-          <div class="rfp-meta">${escHtml([rfp.agency, rfp.bidNumber].filter(Boolean).join(' · '))}</div>
-          <div class="rfp-pills">
-            ${rfp.classification ? `<span class="pill pill-class">${escHtml(rfp.classification)}</span>` : ''}
-            <span class="pill pill-date${urgent ? ' urgent' : ''}">${escHtml(dateText)}</span>
-            <span class="pill ${readinessPill(rfp.readiness)}">${escHtml(rfp.readiness || 'unknown')}</span>
-          </div>
-          ${rfp.fitSummary ? `<p class="rfp-fit">${escHtml(rfp.fitSummary)}</p>` : ''}
-          ${gaps.length ? `
-            <div class="rfp-pills">
-              ${gaps.map(g => `<span class="pill pill-gap">Gap: ${escHtml(g)}</span>`).join('')}
-            </div>` : ''}
-          ${rfp.confidence === 'low'
-            ? '<p class="rfp-low-conf">⚠ Limited RFP detail — score is approximate</p>'
-            : ''}
-          ${rfp.sourceUrl
-            ? `<a href="${encodeURI(rfp.sourceUrl)}" target="_blank" rel="noopener noreferrer" class="rfp-link">View on Bids &amp; Tenders ↗</a>`
-            : ''}
-        </div>
-        <div class="score-badge ${scoreClass(rfp.score)}">
-          <span class="score-num">${rfp.score}</span>
-          <span class="score-lbl">score</span>
-        </div>
-      `;
-      cardsEl.appendChild(card);
-    });
-  }
-
-  document.getElementById('update-rfp-btn').addEventListener('click', () => {
-    renderRfpList();
-    showView('view2');
-  });
-
-  document.getElementById('start-over-btn').addEventListener('click', () => {
-    if (!confirm('Start over? All data will be cleared.')) return;
-    state.vendorProfile = null;
-    state.rfpUrls       = [];
-    state.manualRfps    = [];
-    state.scoredRfps    = [];
-    docCount = 1;
-    document.getElementById('bid-docs').innerHTML = `
-      <div class="form-group">
-        <label>Bid Document 1</label>
-        <textarea rows="8" placeholder="Paste the full text of a past bid submission here…"></textarea>
-      </div>`;
-    document.getElementById('company-name').value = '';
-    document.getElementById('add-doc-btn').style.display = '';
-    document.getElementById('v1-error').textContent = '';
-    showView('view1');
-  });
-
-  // ── Escape helper (XSS safety) ───────────────────────────
-  function escHtml(str) {
-    if (str == null) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
-  }
+    }
+  })();
 </script>
 </body>
 </html>
