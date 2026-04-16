@@ -486,68 +486,11 @@
 <body>
 
 <!-- ════════════════════════════════════════════
-     PASSWORD GATE
-════════════════════════════════════════════ -->
-<div id="gate">
-  <div class="gate-card">
-    <img src="https://ic9.esolg.ca/235250_BidsandTenders/en/resources/logos/BT_NewLogo_NameandSymol-colored.png"
-         height="48" alt="bids&tenders" style="margin-bottom:6px;">
-    <p style="font-size:13px; color:#555; margin-bottom:2px;">My Bids</p>
-    <div class="gate-error" id="gate-error"></div>
-    <input type="password" id="gate-input" class="gate-input" placeholder="Password" autocomplete="current-password">
-    <button class="btn-teal" id="gate-btn" style="width:100%;">Sign In</button>
-  </div>
-</div>
-
-<!-- ════════════════════════════════════════════
      GLOBAL LOADING OVERLAY
 ════════════════════════════════════════════ -->
 <div id="loading">
   <div class="spinner"></div>
   <span id="loading-text">Loading…</span>
-</div>
-
-<!-- ════════════════════════════════════════════
-     ONBOARDING MODAL
-════════════════════════════════════════════ -->
-<div class="modal-overlay" id="onboard-modal">
-  <div class="modal-card">
-    <div class="modal-hdr">
-      <h2>Set up your BidMatch profile</h2>
-      <button class="modal-close" id="onboard-dismiss-btn">✕</button>
-    </div>
-
-    <span class="slabel">Step 1 — Company Info</span>
-    <div class="form-row-2" style="margin-bottom:12px;">
-      <div class="form-group">
-        <label>Company Name <span style="color:#C0392B;">*</span></label>
-        <input type="text" id="ob-company" class="form-ctrl" placeholder="e.g. Nexus Technology Inc.">
-      </div>
-      <div class="form-group">
-        <label>Industry / Sector</label>
-        <input type="text" id="ob-industry" class="form-ctrl" placeholder="e.g. IT Services, Construction">
-      </div>
-    </div>
-    <div class="form-group">
-      <label>Company Description</label>
-      <textarea id="ob-desc" class="form-ctrl" rows="3" placeholder="Brief description of what your company does…"></textarea>
-    </div>
-
-    <hr class="form-divider">
-    <span class="slabel">Step 2 — Past Bid Submissions (optional)</span>
-    <p class="hint-text" style="margin-bottom:12px;">Paste up to 3 previous bid submissions. Don't have any? We'll use sample data.</p>
-
-    <div id="ob-docs">
-      <div class="form-group">
-        <label>Bid Document 1</label>
-        <textarea class="form-ctrl" rows="5" placeholder="Paste the full text of a past bid submission here…"></textarea>
-      </div>
-    </div>
-    <button class="add-doc-btn" id="ob-add-doc">＋ Add another document</button>
-
-    <div class="form-error" id="ob-error"></div>
-    <button class="btn-teal" id="ob-submit" style="width:100%; margin-top:4px;">Build my profile →</button>
-  </div>
 </div>
 
 <!-- ════════════════════════════════════════════
@@ -928,126 +871,14 @@
   }
 
   /* ══════════════════════════════════════════════
-     PASSWORD GATE
-  ══════════════════════════════════════════════ */
-  document.getElementById('gate-btn').addEventListener('click', tryPassword);
-  document.getElementById('gate-input').addEventListener('keydown', e => { if (e.key === 'Enter') tryPassword(); });
-
-  function tryPassword() {
-    if (document.getElementById('gate-input').value === CORRECT_PASSWORD) {
-      state.authed = true;
-      sessionStorage.setItem('bm_auth', '1');
-      document.getElementById('gate').classList.add('hidden');
-      loadSession();
-      enterApp();
-    } else {
-      document.getElementById('gate-error').textContent = 'Incorrect password.';
-    }
-  }
-
-  /* ══════════════════════════════════════════════
      ENTER APP
   ══════════════════════════════════════════════ */
   function enterApp() {
     document.getElementById('main-page').classList.add('active');
     renderBidsTable();
-
-    if (state.onboarded && state.vendorProfile) {
-      // Already have profile — show AI section, trigger fetch if needed
-      if (!state.rfpsFetched) {
-        renderAiSkeletons();
-        fetchAndScoreRfps();
-      } else {
-        renderAiTable();
-      }
-    } else {
-      // Show onboarding modal
-      document.getElementById('onboard-modal').classList.add('active');
-      renderAiSetupPrompt();
-    }
+    renderAiSkeletons();
+    fetchAndScoreRfps();
   }
-
-  /* ══════════════════════════════════════════════
-     ONBOARDING MODAL
-  ══════════════════════════════════════════════ */
-  document.getElementById('ob-add-doc').addEventListener('click', () => {
-    if (obDocCount >= 3) return;
-    obDocCount++;
-    const c = document.getElementById('ob-docs');
-    const d = document.createElement('div');
-    d.className = 'form-group';
-    d.innerHTML = `<label>Bid Document ${obDocCount}</label>
-      <textarea class="form-ctrl" rows="5" placeholder="Paste the full text of a past bid submission here…"></textarea>`;
-    c.appendChild(d);
-    if (obDocCount >= 3) document.getElementById('ob-add-doc').style.display = 'none';
-  });
-
-  document.getElementById('onboard-dismiss-btn').addEventListener('click', () => {
-    document.getElementById('onboard-modal').classList.remove('active');
-    document.getElementById('setup-banner').classList.add('show');
-  });
-
-  document.getElementById('setup-now-link').addEventListener('click', e => {
-    e.preventDefault();
-    document.getElementById('setup-banner').classList.remove('show');
-    document.getElementById('onboard-modal').classList.add('active');
-  });
-
-  document.getElementById('ob-submit').addEventListener('click', async () => {
-    const company  = document.getElementById('ob-company').value.trim();
-    const industry = document.getElementById('ob-industry').value.trim();
-    const desc     = document.getElementById('ob-desc').value.trim();
-    const tas      = document.querySelectorAll('#ob-docs textarea');
-    const bidTexts = Array.from(tas).map(t => t.value.trim()).filter(Boolean);
-    const errEl    = document.getElementById('ob-error');
-
-    if (!company) { errEl.textContent = 'Company name is required.'; return; }
-    errEl.textContent = '';
-
-    showLoading('Building your profile…');
-    try {
-      const raw = await callClaude(
-        `Extract a vendor capability profile from the provided company information and any bid documents.
-Return ONLY valid JSON, no markdown, no explanation.
-Schema: { "companyName": string, "industry": string, "description": string, "capabilities": string[], "categories": string[], "avgProjectSize": string, "geography": string[], "certs": string[], "summary": string, "strengthKeywords": string[] }`,
-        `Company: ${company}
-Industry: ${industry || 'Not specified'}
-Description: ${desc || 'Not provided'}
-${bidTexts.length ? 'Bid Documents:\n' + bidTexts.join('\n---\n') : 'No bid documents — infer from company info only.'}`,
-        false
-      );
-
-      state.vendorProfile = parseJsonObject(raw);
-      state.vendorProfile.companyName = state.vendorProfile.companyName || company;
-
-      // Merge sample bids + uploaded
-      state.previousBids = [...SAMPLE_BIDS];
-      bidTexts.forEach((txt, i) => {
-        state.previousBids.push({
-          id: `bid-up-${i+1}`,
-          title: `Uploaded Bid ${i+1}`,
-          agency: '', date: new Date().toISOString().slice(0,10),
-          value: '', outcome: 'submitted',
-          summary: 'Uploaded bid document.',
-          keywords: (state.vendorProfile.strengthKeywords || []).slice(0, 4),
-          docText: txt,
-        });
-      });
-
-      state.onboarded = true;
-      saveSession();
-      hideLoading();
-      document.getElementById('onboard-modal').classList.remove('active');
-      document.getElementById('setup-banner').classList.remove('show');
-
-      renderBidsTable();
-      renderAiSkeletons();
-      fetchAndScoreRfps();
-    } catch (err) {
-      hideLoading();
-      errEl.textContent = 'Error: ' + err.message;
-    }
-  });
 
   /* ══════════════════════════════════════════════
      RFP FETCH + SCORE (TWO-STEP)
@@ -1246,10 +1077,6 @@ ${urls.join('\n')}`,
      REFRESH BUTTON
   ══════════════════════════════════════════════ */
   document.getElementById('refresh-ai-btn').addEventListener('click', () => {
-    if (!state.onboarded) {
-      document.getElementById('onboard-modal').classList.add('active');
-      return;
-    }
     state.rfpsFetched = false; state.liveRfps = [];
     saveSession();
     renderAiSkeletons();
@@ -1520,14 +1347,32 @@ Additional instructions: ${instr}`,
      INIT
   ══════════════════════════════════════════════ */
   (function init() {
-    if (sessionStorage.getItem('bm_auth') === '1') {
-      loadSession();
-      if (state.onboarded && state.vendorProfile) {
-        document.getElementById('gate').classList.add('hidden');
-        state.authed = true;
-        enterApp();
-      }
-    }
+    state.vendorProfile = {
+      companyName: "Nexus Technology Solutions Inc.",
+      industry: "Information Technology Services",
+      description: "Sudbury-based IT services firm with 12 years of experience delivering managed IT, network infrastructure, and cybersecurity solutions to municipal governments, non-profits, and healthcare agencies across Northern and Central Ontario.",
+      capabilities: ["Network infrastructure", "Fortinet deployment", "Microsoft 365 migration", "Cybersecurity assessment", "ERP implementation", "Managed IT services", "Cloud migration", "IT strategic planning"],
+      categories: ["Information Technology", "Consulting Services", "Cybersecurity", "Cloud Services"],
+      avgProjectSize: "$55,000",
+      geography: ["Northern Ontario", "Sudbury", "North Bay", "Nipissing", "Timiskaming", "Parry Sound"],
+      certs: ["Fortinet NSE 4", "Fortinet NSE 5", "Microsoft AZ-104", "MS-102", "CISSP", "CompTIA Security+", "Cisco CCNA"],
+      summary: "Northern Ontario IT firm specializing in municipal and non-profit technology projects including Fortinet network deployments, Microsoft 365 migrations, cybersecurity assessments, and ERP implementations.",
+      strengthKeywords: ["Fortinet", "Microsoft 365", "municipal", "cybersecurity", "ERP", "cloud migration", "Northern Ontario"]
+    };
+
+    state.previousBids = SAMPLE_BIDS;
+    state.onboarded = true;
+
+    // Restore scored RFPs from session if available (avoids re-fetch on refresh)
+    try {
+      const r  = sessionStorage.getItem('bm_rfps');
+      const ts = sessionStorage.getItem('bm_fetch_ts');
+      if (r) state.liveRfps = JSON.parse(r);
+      state.rfpsFetched = sessionStorage.getItem('bm_fetched') === '1';
+      if (ts) state.lastFetchTime = ts;
+    } catch (_) {}
+
+    enterApp();
   })();
 </script>
 </body>
