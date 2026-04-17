@@ -582,6 +582,21 @@
 </div>
 
 <!-- ════════════════════════════════════════════
+     PASSWORD GATE
+════════════════════════════════════════════ -->
+<div id="gate">
+  <div class="gate-card">
+    <img src="https://ic9.esolg.ca/235250_BidsandTenders/en/resources/logos/BT_NewLogo_NameandSymol-colored.png"
+         height="48" alt="bids&tenders" style="margin-bottom:18px;">
+    <p style="font-size:15px;font-weight:bold;color:#1B5E50;margin-bottom:4px;">BidMatch</p>
+    <p style="font-size:12px;color:#555;margin-bottom:0;">Vendor Intelligence Dashboard</p>
+    <input id="pw-input" type="password" class="gate-input" placeholder="Enter password" autocomplete="current-password">
+    <div class="gate-error" id="pw-error"></div>
+    <button class="btn-teal" id="pw-btn" style="width:100%;justify-content:center;">Sign In</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
      MAIN PAGE
 ════════════════════════════════════════════ -->
 <div id="main-page">
@@ -1514,7 +1529,7 @@ Additional instructions: ${instr}`,
   /* ══════════════════════════════════════════════
      INIT
   ══════════════════════════════════════════════ */
-  (function init() {
+  function loadProfile() {
     state.vendorProfile = {
       companyName: "Nexus Technology Solutions Inc.",
       industry: "Information Technology Services",
@@ -1527,10 +1542,41 @@ Additional instructions: ${instr}`,
       summary: "Northern Ontario IT firm specializing in municipal and non-profit technology projects including Fortinet network deployments, Microsoft 365 migrations, cybersecurity assessments, and ERP implementations.",
       strengthKeywords: ["Fortinet", "Microsoft 365", "municipal", "cybersecurity", "ERP", "cloud migration", "Northern Ontario"]
     };
-
     state.previousBids = SAMPLE_BIDS;
     state.onboarded = true;
-    enterApp();
+  }
+
+  (function init() {
+    // Wire password gate
+    const pwBtn   = document.getElementById('pw-btn');
+    const pwInput = document.getElementById('pw-input');
+    const pwError = document.getElementById('pw-error');
+    const gate    = document.getElementById('gate');
+
+    function tryLogin() {
+      if (pwInput.value === CORRECT_PASSWORD) {
+        try { sessionStorage.setItem('bm_auth', '1'); } catch (_) {}
+        gate.classList.add('hidden');
+        loadProfile();
+        enterApp();
+      } else {
+        pwError.textContent = 'Incorrect password.';
+        pwInput.value = '';
+        pwInput.focus();
+      }
+    }
+
+    pwBtn.addEventListener('click', tryLogin);
+    pwInput.addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
+
+    // Skip gate if already authed this session
+    if (sessionStorage.getItem('bm_auth') === '1') {
+      gate.classList.add('hidden');
+      loadProfile();
+      enterApp();
+    } else {
+      pwInput.focus();
+    }
   })();
 </script>
 </body>
