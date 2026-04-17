@@ -1092,11 +1092,33 @@ ${urls.join('\n')}`,
     return JSON.parse(jsonMatch[0]);
   }
 
+  // Full live fetch — used on first visit or manual refresh
+  async function fetchLiveRfps() {
+    try {
+      const seenUrls = getSeenUrls();
+      const newUrls  = await fetchNewRfpUrls(seenUrls);
+      const urls     = newUrls.length > 0 ? newUrls : FALLBACK_URLS;
+      if (newUrls.length > 0) addSeenUrls(newUrls);
+      const rfps = await scoreRfps(urls);
+      if (rfps.length > 0) {
+        state.liveRfps = rfps.sort((a, b) => (b.winProbability || 0) - (a.winProbability || 0));
+        try { localStorage.setItem('bm_extra_rfps', JSON.stringify(state.liveRfps)); } catch (_) {}
+        setLastCheckDate(new Date().toISOString().slice(0, 10));
+        renderRecommendations();
+        updateLastUpdatedLabel('updated');
+        return;
+      }
+    } catch (_) {}
+    // API failed — fall back to CACHED_RFPS so something always shows
+    state.liveRfps = [...CACHED_RFPS].sort((a, b) => (b.winProbability || 0) - (a.winProbability || 0));
+    renderRecommendations();
+  }
+
+  // Background daily check — merges new RFPs on top of existing real data
   async function loadRfps() {
-    // Render immediately with cached data
+    // Render instantly with whatever real data we have
     renderRecommendations();
 
-    // Daily background check — skip if already ran today
     const today = new Date().toISOString().slice(0, 10);
     if (getLastCheckDate() === today) return;
 
@@ -1112,10 +1134,7 @@ ${urls.join('\n')}`,
           const toAdd = newRfps.filter(r => !existingIds.has(r.id));
           state.liveRfps = [...toAdd, ...state.liveRfps]
             .sort((a, b) => (b.winProbability || 0) - (a.winProbability || 0));
-          try {
-            const extras = state.liveRfps.filter(r => !CACHED_RFPS.find(c => c.id === r.id));
-            localStorage.setItem('bm_extra_rfps', JSON.stringify(extras));
-          } catch (_) {}
+          try { localStorage.setItem('bm_extra_rfps', JSON.stringify(state.liveRfps)); } catch (_) {}
           renderRecommendations();
         }
       }
@@ -1126,15 +1145,18 @@ ${urls.join('\n')}`,
   }
 
   function initRfps() {
-    // Merge CACHED_RFPS + any localStorage extras from previous checks
-    let extras = [];
-    try { extras = JSON.parse(localStorage.getItem('bm_extra_rfps') || '[]'); } catch (_) {}
-    const extraIds = new Set(extras.map(r => r.id));
-    state.liveRfps = [
-      ...extras,
-      ...CACHED_RFPS.filter(r => !extraIds.has(r.id))
-    ].sort((a, b) => (b.winProbability || 0) - (a.winProbability || 0));
-    loadRfps();
+    let saved = [];
+    try { saved = JSON.parse(localStorage.getItem('bm_extra_rfps') || '[]'); } catch (_) {}
+
+    if (saved.length > 0) {
+      // Real data from a previous fetch — show instantly, then do daily background check
+      state.liveRfps = saved.sort((a, b) => (b.winProbability || 0) - (a.winProbability || 0));
+      loadRfps();
+    } else {
+      // First visit — show skeletons and fetch live RFPs now
+      renderAiSkeletons();
+      fetchLiveRfps();
+    }
   }
 
   function showRefreshingBanner() {
@@ -1207,8 +1229,11 @@ ${urls.join('\n')}`,
         </div>`;
       document.getElementById('retry-ai-btn').addEventListener('click', () => {
         localStorage.removeItem('bm_last_check');
+        localStorage.removeItem('bm_extra_rfps');
+        localStorage.removeItem('bm_seen_urls');
+        state.liveRfps = [];
         renderAiSkeletons();
-        loadRfps();
+        fetchLiveRfps();
       });
       return;
     }
@@ -1273,8 +1298,11 @@ ${urls.join('\n')}`,
   ══════════════════════════════════════════════ */
   document.getElementById('refresh-ai-btn').addEventListener('click', () => {
     localStorage.removeItem('bm_last_check');
+    localStorage.removeItem('bm_extra_rfps');
+    localStorage.removeItem('bm_seen_urls');
+    state.liveRfps = [];
     renderAiSkeletons();
-    loadRfps();
+    fetchLiveRfps();
   });
 
   /* ══════════════════════════════════════════════
